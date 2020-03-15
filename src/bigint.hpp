@@ -88,7 +88,7 @@ class BigInt {
 
    private:
     // construct from raw data, length=0 is seen as length=len_
-    BigInt(IntT* data, size_t length = 0);
+    explicit BigInt(IntT* data, size_t length = 0);
 
     // data
     static constexpr size_t LIMB = sizeof(IntT);

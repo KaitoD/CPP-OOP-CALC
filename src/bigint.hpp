@@ -39,14 +39,20 @@ class BigInt {
     // basic operations
     bool Sign() const;
     // shrink the size allocated to *a power of 2*
-    void Shrink();
-    // assign random value, length=0 means length=this->len_
-    void GenRandom(size_t length = 0);
+    // @return: capacity after shrink
+    size_t Shrink();
+    // the sign will be preserved, so len_ may be seg_len+1 if bit_len%LIMB==0
+    BigInt& CutLen(size_t seg_len, size_t bit_len = 0);
+    BigInt& CutBit(size_t bitlen);
+    // assign non-negative random value
+    // @param: length=0 means length=this->len_
+    // @param: Unless 0, ensure the bitlen of the highest segment is fixed%LIMB
+    //         so fixed==LIMB will always generate a negative value
+    BigInt& GenRandom(size_t length = 0, size_t fixed = 0);
 
     // bit arithmetic
     BigInt& ToBitInv();  // modifying version of ~a
     BigInt operator~() const;
-    BigInt& CutBit(size_t bitlen);
     BigInt& operator&=(const BigInt& rhs);
     BigInt& operator|=(const BigInt& rhs);
     BigInt& operator^=(const BigInt& rhs);
@@ -87,11 +93,12 @@ class BigInt {
     friend std::ostream& operator<<(std::ostream& out, const BigInt& rhs);
 
    private:
-    // construct from raw data, length=0 is seen as length=len_
-    explicit BigInt(IntT* data, size_t length = 0);
+    // construct from raw data
+    explicit BigInt(const IntT* data, size_t length);
 
     // data
-    static constexpr size_t LIMB = sizeof(IntT);
+    static constexpr size_t LIMB = sizeof(IntT) << 3;
+    static constexpr size_t MAX_CAP = size_t(1) << 63;
     size_t cap_;  // capacity, currently must be *a power of 2*
     size_t len_;  // actual used length
     IntT* val_;
@@ -107,12 +114,17 @@ class BigInt {
 
     // private functions
     // used to align the length if needed
-    void SetLen(size_t len);
+    // accept cut and expand
+    void SetLen(size_t new_len, bool preserve_sign);
     // shrink the len_,
-    // must ensure target len is definitely shorter than current len.
+    // must ensure target len is definitely not longer than current len.
+    // preserve sign
+    // @return: len after shrink
     void ShrinkLen();
-    //@return 1) truncate, 0) no truncate
-    bool Resize(size_t size);
+    void Resize(size_t new_cap);
+    void AutoExpandSize(size_t target_len);
+    // Shrink size if certain condition is met
+    void AutoShrinkSize();
 };
 
 // non-modifying binary operators
@@ -179,18 +191,6 @@ extern template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
 extern template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
 extern template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
                                           const BigInt<uint8_t>& rhs);
-extern template bool operator<(const BigInt<uint8_t>& lhs,
-                               const BigInt<uint8_t>& rhs);
-extern template bool operator>(const BigInt<uint8_t>& lhs,
-                               const BigInt<uint8_t>& rhs);
-extern template bool operator<=(const BigInt<uint8_t>& lhs,
-                                const BigInt<uint8_t>& rhs);
-extern template bool operator>=(const BigInt<uint8_t>& lhs,
-                                const BigInt<uint8_t>& rhs);
-extern template bool operator==(const BigInt<uint8_t>& lhs,
-                                const BigInt<uint8_t>& rhs);
-extern template bool operator!=(const BigInt<uint8_t>& lhs,
-                                const BigInt<uint8_t>& rhs);
 extern template BigInt<uint16_t> operator&(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
 extern template BigInt<uint16_t> operator|(BigInt<uint16_t> lhs,
@@ -210,18 +210,6 @@ extern template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
 extern template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
 extern template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
-extern template bool operator<(const BigInt<uint16_t>& lhs,
-                               const BigInt<uint16_t>& rhs);
-extern template bool operator>(const BigInt<uint16_t>& lhs,
-                               const BigInt<uint16_t>& rhs);
-extern template bool operator<=(const BigInt<uint16_t>& lhs,
-                                const BigInt<uint16_t>& rhs);
-extern template bool operator>=(const BigInt<uint16_t>& lhs,
-                                const BigInt<uint16_t>& rhs);
-extern template bool operator==(const BigInt<uint16_t>& lhs,
-                                const BigInt<uint16_t>& rhs);
-extern template bool operator!=(const BigInt<uint16_t>& lhs,
-                                const BigInt<uint16_t>& rhs);
 extern template BigInt<uint32_t> operator&(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
 extern template BigInt<uint32_t> operator|(BigInt<uint32_t> lhs,
@@ -241,6 +229,31 @@ extern template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
 extern template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
 extern template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
+#ifndef __cpp_impl_three_way_comparison
+extern template bool operator<(const BigInt<uint8_t>& lhs,
+                               const BigInt<uint8_t>& rhs);
+extern template bool operator>(const BigInt<uint8_t>& lhs,
+                               const BigInt<uint8_t>& rhs);
+extern template bool operator<=(const BigInt<uint8_t>& lhs,
+                                const BigInt<uint8_t>& rhs);
+extern template bool operator>=(const BigInt<uint8_t>& lhs,
+                                const BigInt<uint8_t>& rhs);
+extern template bool operator==(const BigInt<uint8_t>& lhs,
+                                const BigInt<uint8_t>& rhs);
+extern template bool operator!=(const BigInt<uint8_t>& lhs,
+                                const BigInt<uint8_t>& rhs);
+extern template bool operator<(const BigInt<uint16_t>& lhs,
+                               const BigInt<uint16_t>& rhs);
+extern template bool operator>(const BigInt<uint16_t>& lhs,
+                               const BigInt<uint16_t>& rhs);
+extern template bool operator<=(const BigInt<uint16_t>& lhs,
+                                const BigInt<uint16_t>& rhs);
+extern template bool operator>=(const BigInt<uint16_t>& lhs,
+                                const BigInt<uint16_t>& rhs);
+extern template bool operator==(const BigInt<uint16_t>& lhs,
+                                const BigInt<uint16_t>& rhs);
+extern template bool operator!=(const BigInt<uint16_t>& lhs,
+                                const BigInt<uint16_t>& rhs);
 extern template bool operator<(const BigInt<uint32_t>& lhs,
                                const BigInt<uint32_t>& rhs);
 extern template bool operator>(const BigInt<uint32_t>& lhs,
@@ -253,5 +266,6 @@ extern template bool operator==(const BigInt<uint32_t>& lhs,
                                 const BigInt<uint32_t>& rhs);
 extern template bool operator!=(const BigInt<uint32_t>& lhs,
                                 const BigInt<uint32_t>& rhs);
+#endif
 }  // namespace calc
 #endif

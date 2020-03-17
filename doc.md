@@ -21,13 +21,13 @@ inline static auto rand_gen_ = static_cast<std::mt19937>(rand_dev_());
 inline static std::uniform_int_distribution<IntT> rand_;
 ```
 
-LIMB和MAX\_CAP是常用的静态常量，分别表示每段的位长和最大的容量。
+`LIMB`和`MAX_CAP`是常用的静态常量，分别表示每段的位长和最大的容量。
 
-cap\_指明现在的数组长度。为了二分方便，目前**保证永远是2的幂**。 这需要构造函数保证构造为2的幂，且每次加长或缩短数组的时候都保证乘/除2的某个幂。 cap\_介于`[1, MAX_CAP]`，不要求最短，但是尽量不要超出太多。
+`cap_`指明现在的数组长度。为了二分方便，目前**保证永远是2的幂**。 这需要构造函数保证构造为2的幂，且每次加长或缩短数组的时候都保证乘或除2的某个幂。 `cap_`介于`[1, MAX_CAP]`，不要求最短，但是尽量不要超出太多。
 
-len\_指明现在正在使用的段数，段从低往高，仿照小端存储。 为了安全起见，**未被使用的段要求为0**。 同时，要求**绝大部分时候保证len最短**，因为保证len短的开销应该不会太大， 又能够减少其它计算的开销。
+`len_`指明现在正在使用的段数，段从低往高，仿照小端存储。 为了安全起见，**未被使用的段要求为0**。 同时，要求**绝大部分时候保证`len_`最短**，因为保证`len_`短的开销应该不会太大， 又能够减少其它计算的开销。
 
-val\_为存储数据的数组。以补码存储。`val_[len_-1]`的最高位是符号位， 意味着能表示的数据范围是$[-2^{LIMB*len_-1}, 2^{LIMB*len_-1})$
+`val_`为存储数据的数组。以补码存储。`val_[len_-1]`的最高位是符号位， 意味着能表示的数据范围是`[-2^{LIMB*len_-1}, 2^{LIMB*len_-1})`
 
 最后三个是随机数生成器，生成每段的随机数的方法是`rand_(rand_gen_)`。
 
@@ -54,7 +54,7 @@ while (len_ > 1 && some_condition()) --len_;
 
 #### `explicit BigInt(int value = 0);`
 
-默认构造函数，构建长度刚好放下int的数组，初始化为value。 len\_是根据实际数据大小设置的。
+默认构造函数，构建长度刚好放下int的数组，初始化为`value`。 `len_`是根据实际数据大小设置的。
 
 #### `BigInt(const BigInt& rhs);`
 
@@ -66,7 +66,7 @@ while (len_ > 1 && some_condition()) --len_;
 
 #### `explicit BigInt(const char* str, size_t base = 0);`
 
-【尚未实现】以`\0`结尾的字符串构造。base指明进制，支持范围$[2, 36]$， 或0代表按照前缀自动检测，支持`0b, 0B, 0, 0x, 0X`。
+【尚未实现】以`\0`结尾的字符串构造。base指明进制，支持范围`[2, 36]`， 或0代表按照前缀自动检测，支持`0b, 0B, 0, 0x, 0X`。
 
 #### `explicit BigInt(const std::string& str, size_t base = 0)`
 
@@ -74,7 +74,7 @@ while (len_ > 1 && some_condition()) --len_;
 
 ### 析构函数`virtual ~BigInt();`
 
-删除val\_数组。
+删除`val_`数组。
 
 ### 赋值和类型转换运算符
 
@@ -102,7 +102,7 @@ while (len_ > 1 && some_condition()) --len_;
 
 #### `BigInt& CutLen(size_t seg_len, size_t bit_len = 0);`
 
-依赖`Sign(), SetLen(size_t,bool)`。 剪切长度。剪切至seg\_len段，最高位`bit%LIMB`（范围$[1, LIMB]$）个二进制位。 保留符号，因此若`bit%LIMB==0`则意味着 假如最高位不等于符号，那么会得到seg\_len+1段。
+依赖`Sign()`, `SetLen(size_t,bool)`。 剪切长度。剪切至`seg_len`段，最高位`bit % LIMB`（范围`[1, LIMB]`）个二进制位。 保留符号，因此若`bit % LIMB == 0`则意味着 假如最高位不等于符号，那么会得到`seg_len + 1`段。
 
 #### `BigInt& CutBit(size_t bitlen);`
 
@@ -110,13 +110,13 @@ while (len_ > 1 && some_condition()) --len_;
 
 #### `BigInt& GenRandom(size_t length = 0, size_t fixed = 0);`
 
-依赖`SetLen(size_t, bool)`。 生成随机数。length指明随机数占用的段数。fixed指明最高段的占用位数。
+依赖`SetLen(size_t, bool)`。 生成随机数。`length`指明随机数占用的段数。`fixed`指明最高段的占用位数。
 
-若`fixed==0`，则最高段占用任意位，但保证非负。 此时的随机数范围是$[0, 2^{LIMB*length-1})$
+若`fixed == 0`，则最高段占用任意位，但保证非负。 此时的随机数范围是`[0, 2^{LIMB * length - 1})`
 
-其他情况下，若`fixed%LIMB==0`，则最高段保证最高位一定为1，这意味着生成的是负数。 此时的随机数范围是$[-2^{LIMB*length-1}, 0)$
+其他情况下，若`fixed % LIMB == 0`，则最高段保证最高位一定为1，这意味着生成的是负数。 此时的随机数范围是`[-2^{LIMB * length - 1}, 0)`
 
-其他情况下，取`fixed%=LIMB`，最高段保证从低往高第fixed位为1，更高位均为0。 此时的随机数范围是$[2^{LIMB*(length-1)+fixed}, 2^{LIMB*(length-1)+fixed+1})$
+其他情况下，取`fixed %= LIMB`，最高段保证从低往高第`fixed`位为1，更高位均为0。 此时的随机数范围是`[2^{LIMB * (length - 1) + fixed}, 2^{LIMB * (length-1) + fixed + 1})`
 
 ### 位运算
 
@@ -130,14 +130,16 @@ while (len_ > 1 && some_condition()) --len_;
 
 #### `BigInt& operator&=(const BigInt& rhs);`
 
-    BigInt& operator|=(const BigInt& rhs);
-    BigInt& operator^=(const BigInt& rhs);
+``` {.cpp}
+BigInt& operator|=(const BigInt& rhs);
+BigInt& operator^=(const BigInt& rhs);
+```
 
-调用了`Sign(), SetLen(), ShrinkLen()`。 位运算+赋值运算符。
+调用了`Sign()`, `SetLen()`, `ShrinkLen()`。 位运算+赋值运算符。
 
 #### `BigInt& operator<<=(size_t rhs);`
 
-调用了`AutoShrinkSize(), AutoExpandSize()`。 结果段数手动进行了调整（因为最多调1）。
+调用了`AutoShrinkSize()`, `AutoExpandSize()`。 结果段数手动进行了调整（因为最多调1）。
 
 #### `BigInt& operator>>=(size_t rhs);`
 
@@ -185,29 +187,29 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 
 #### `explicit BigInt(const IntT* data, size_t length);`
 
-通过数组直接构造。`length==0`则不复制，创建数组长度为1，并置0。 最多复制MAX\_CAP这么长的数据。
+通过数组直接构造。`length == 0`则不复制，创建数组长度为1，并置0。 最多复制`MAX_CAP`长度的数据。
 
 ### 私有方法
 
 #### `void SetLen(size_t new_len, bool preserve_sign);`
 
-依赖`Sign(), AutoShrinkSize(), AutoExpandSize()`。 设置段数为new\_len，范围$[1,MAX_CAP]$，接受缩短和延长。 延长的时候非负数则高位补0，负数补 -1，使得补码下数值不变。 如果没有改变len则无影响。 如果是缩短且`preserve_sign==true`则会把最高段的最高位也切掉，设置为符号位。 延长的时候`preserve_sign`没有影响。 *非常建议* 全用这个方法改变len。
+依赖`Sign()`, `AutoShrinkSize()`, `AutoExpandSize()`。 设置段数为`new_len`，范围`[1, MAX_CAP]`，接受缩短和延长。 延长的时候非负数则高位补`0`，负数补`-1`，使得补码下数值不变。 如果`new_len == len_`则无影响。 如果是缩短且`preserve_sign == true`则会把最高段的最高位也切掉，设置为符号位。 延长的时候`preserve_sign`没有影响。 *非常建议* 全用这个方法改变`len_`。
 
 #### `void ShrinkLen();`
 
-依赖`Sign()`。尽量缩短len\_。 *非常建议* 可能改变段数的基本操作结束后都调用这个。
+依赖`Sign()`。尽量缩短`len_`。 *非常建议* 可能改变段数的基本操作结束后都调用这个。
 
 #### `void Resize(size_t new_cap);`
 
-改变cap。**不判断**new\_cap是否合法。 调用`Resize(size_t)`之前 *必须* 判断new\_cap介于$[1, MAX_CAP]$。
+改变`cap_`。**不判断**`new_cap`是否合法。 调用`Resize(size_t)`之前 *必须* 判断`new_cap`介于`[1, MAX_CAP]`。
 
 #### `void AutoExpandSize(size_t target_len);`
 
-依赖`Resize(size_t)`。自动根据所需的len来增大cap至某个最小的2的幂。 此函数永远不减少cap。减少cap请看`AutoShrinkSize()`。
+依赖`Resize(size_t)`。自动根据`target_len`来增大`cap_`至某个最小的2的幂。 此函数永远不减少`cap_`。减少`cap_`请看`AutoShrinkSize()`。
 
 #### `void AutoShrinkSize();`
 
-依赖`Resize(size_t)`。只有在当前len不超过1/8的cap时缩短cap至最小。 如果愿意的话可以调用，但要注意到重新分配内存的开销并不太小。 此函数永远不增加cap。增加cap请看`AutoExpandSize()`。
+依赖`Resize(size_t)`。只有在`len_ <= (cap_ >> 3)`时缩短`cap_`至最小。 如果愿意的话可以调用，但要注意到重新分配内存的开销并不太小。 此函数永远不增加`cap_`。增加`cap_`请看`AutoExpandSize()`。
 
 ### 不修改的双目运算符
 

@@ -84,7 +84,7 @@ compile/bigint_basic_test.o: compile/bigint.o src/bigint.hpp
 	$(CXX) $(CXXFLAGS) -c tests/bigint_basic_test.cpp \
 		-o compile/bigint_basic_test.o
 
-compile/bigint.o: src/bigint.cpp src/bigint.hpp
+compile/bigint.o: src/bigint.cpp src/bigint.hpp src/bigint_bit_arith.cpp
 	$(CXX) $(CXXFLAGS) -c src/bigint.cpp -o compile/bigint.o
 
 .PHONY: all clean clean-all

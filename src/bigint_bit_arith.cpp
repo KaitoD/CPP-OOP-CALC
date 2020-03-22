@@ -14,59 +14,50 @@ BigInt<IntT> BigInt<IntT>::operator~() const {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator&=(const BigInt& rhs) {
-    if (len_ == rhs.len_) {
+    if (len_ <= rhs.len_) {
+        if (len_ < rhs.len_) SetLen(rhs.len_, false);
         for (size_t i = 0; i < len_; ++i) val_[i] &= rhs.val_[i];
-    } else if (len_ > rhs.len_) {
+    } else {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] &= rhs.val_[i];
         // implicit alignment of len_
         if (!rhs.Sign()) {
             std::fill(val_ + rhs.len_, val_ + len_, IntT(0));
             len_ = rhs.len_;
         }
-        ShrinkLen();
-    } else {
-        SetLen(rhs.len_, false);
-        for (size_t i = 0; i < rhs.len_; ++i) val_[i] &= rhs.val_[i];
-        ShrinkLen();
     }
+    ShrinkLen();
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator|=(const BigInt& rhs) {
-    if (len_ == rhs.len_) {
+    if (len_ <= rhs.len_) {
+        if (len_ < rhs.len_) SetLen(rhs.len_, false);
         for (size_t i = 0; i < len_; ++i) val_[i] |= rhs.val_[i];
-    } else if (len_ > rhs.len_) {
+    } else {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] |= rhs.val_[i];
         // implicit alignment of len_
-        if (!rhs.Sign()) {
-            std::fill(val_ + rhs.len_, val_ + len_, IntT(0));
-            len_ = rhs.len_;
+        if (rhs.Sign()) {
+            val_[rhs.len_] = IntT(-1);
+            if (rhs.len_ + 1 < len_)
+                std::fill(val_ + rhs.len_ + 1, val_ + len_, IntT(0));
+            len_ = rhs.len_ + 1;
         }
-        ShrinkLen();
-    } else {
-        SetLen(rhs.len_, false);
-        for (size_t i = 0; i < rhs.len_; ++i) val_[i] |= rhs.val_[i];
-        ShrinkLen();
     }
+    ShrinkLen();
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator^=(const BigInt& rhs) {
-    if (len_ == rhs.len_) {
+    if (len_ <= rhs.len_) {
+        if (len_ < rhs.len_) SetLen(rhs.len_, false);
         for (size_t i = 0; i < len_; ++i) val_[i] ^= rhs.val_[i];
-    } else if (len_ > rhs.len_) {
+    } else {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] ^= rhs.val_[i];
         // implicit alignment of len_
-        if (!rhs.Sign()) {
-            std::fill(val_ + rhs.len_, val_ + len_, IntT(0));
-            len_ = rhs.len_;
-        }
-        ShrinkLen();
-    } else {
-        SetLen(rhs.len_, false);
-        for (size_t i = 0; i < rhs.len_; ++i) val_[i] ^= rhs.val_[i];
-        ShrinkLen();
+        if (rhs.Sign())
+            for (size_t i = rhs.len_; i < len_; ++i) val_[i] = ~val_[i];
     }
+    ShrinkLen();
     return *this;
 }
 template <typename IntT>
@@ -119,5 +110,27 @@ BigInt<IntT>& BigInt<IntT>::operator>>=(size_t rhs) {
     }
     AutoShrinkSize();
     return *this;
+}
+
+// non-modifying binary operators
+template <typename IntT>
+BigInt<IntT> operator&(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs &= rhs;
+}
+template <typename IntT>
+BigInt<IntT> operator|(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs |= rhs;
+}
+template <typename IntT>
+BigInt<IntT> operator^(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs ^= rhs;
+}
+template <typename IntT>
+BigInt<IntT> operator+(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs += rhs;
+}
+template <typename IntT>
+BigInt<IntT> operator-(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs -= rhs;
 }
 }  // namespace calc

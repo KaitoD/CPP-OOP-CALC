@@ -81,14 +81,11 @@ BigInt<IntT>& BigInt<IntT>::operator<<=(size_t rhs) {
         AutoShrinkSize();
     } else {
         if (r != 0) {
-            auto mask1 = static_cast<IntT>((IntT(1) << (LIMB - r)) - 1);
-            auto mask2 = static_cast<IntT>(IntT(-1) - mask1);
             for (size_t i = new_len - 1; i > q; --i) {
-                val_[i] = static_cast<IntT>(
-                    ((val_[i - q] & mask1) << r) +
-                    ((val_[i - q - 1] & mask2) >> (LIMB - r)));
+                val_[i] = static_cast<IntT>((val_[i - q] << r) +
+                                            (val_[i - q - 1] >> (LIMB - r)));
             }
-            val_[q] = static_cast<IntT>((val_[0] & mask1) << r);
+            val_[q] = static_cast<IntT>(val_[0] << r);
         } else {
             for (size_t i = new_len - 1; i > q; --i) val_[i] = val_[i - q];
         }
@@ -108,15 +105,11 @@ BigInt<IntT>& BigInt<IntT>::operator>>=(size_t rhs) {
         len_ = 1;
     } else {
         if (r != 0) {
-            auto mask2 = static_cast<IntT>((IntT(1) << r) - 1);
-            auto mask1 = static_cast<IntT>(IntT(-1) - mask2);
             for (size_t i = 0; i < new_len - 1; ++i) {
-                val_[i] = static_cast<IntT>(
-                    ((val_[i + q] & mask1) >> r) +
-                    ((val_[i + q + 1] & mask2) << (LIMB - r)));
+                val_[i] = static_cast<IntT>((val_[i + q] >> r) +
+                                            (val_[i + q + 1] << (LIMB - r)));
             }
-            val_[new_len - 1] =
-                static_cast<IntT>((val_[len_ - 1] & mask1) >> r);
+            val_[new_len - 1] = static_cast<IntT>(val_[len_ - 1] >> r);
         } else {
             for (size_t i = 0; i < new_len; ++i) val_[i] = val_[i + q];
         }

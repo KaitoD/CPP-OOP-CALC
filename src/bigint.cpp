@@ -1,6 +1,7 @@
 #include "bigint.hpp"
 #include "bigint_addsub.cpp"
 #include "bigint_bit_arith.cpp"
+#include "bigint_io.cpp"
 // If there are other cpp files, include them here,
 // because instanizaiton is only here. Example:
 // #include "bigint_mul.cpp"
@@ -149,6 +150,14 @@ BigInt<IntT>& BigInt<IntT>::GenRandom(size_t length, size_t fixed) {
         }
     }
     return *this;
+}
+template <typename IntT>
+const IntT* BigInt<IntT>::Data() const {
+    return val_;
+}
+template <typename IntT>
+size_t BigInt<IntT>::Length() const {
+    return len_;
 }
 
 // comparison

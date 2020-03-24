@@ -23,8 +23,8 @@ class BigInt {
     BigInt(BigInt&& rhs) noexcept;
     // construct by \0 terminated c-style string, base=0 is auto-detect
     explicit BigInt(const char* str, size_t base = 0);
-    // explicit BigInt(const std::string& str, size_t base = 0)
-    // : BigInt(str.c_str(), base) {}
+    explicit BigInt(const std::string& str, size_t base = 0)
+        : BigInt(str.c_str(), base) {}
 
     // destructor
     virtual ~BigInt();
@@ -34,7 +34,12 @@ class BigInt {
     BigInt& operator=(const BigInt& rhs);
     // move assignment, with possible memory reuse
     BigInt& operator=(BigInt&& rhs) noexcept;
+    BigInt& operator=(const char* str);
+    BigInt& operator=(const std::string& str);
     explicit operator bool() const;
+    explicit operator std::string() const;
+    std::string ToString(size_t base, bool uppercase = false,
+                         int showbase = 0) const;
 
     // basic operations
     bool Sign() const;
@@ -49,6 +54,8 @@ class BigInt {
     // @param: Unless 0, ensure the bitlen of the highest segment is fixed%LIMB
     //         so fixed==LIMB will always generate a negative value
     BigInt& GenRandom(size_t length = 0, size_t fixed = 0);
+    const IntT* Data() const;
+    size_t Length() const;
 
     // bit arithmetic
     BigInt& ToBitInv();  // modifying version of ~a
@@ -67,6 +74,7 @@ class BigInt {
 #endif
 
     // operator +=,-=,++,--
+    BigInt& operator+=(IntT rhs);
     BigInt& operator+=(const BigInt& rhs);
     BigInt& operator-=(const BigInt& rhs);
     BigInt& operator++();  // ++i
@@ -83,12 +91,13 @@ class BigInt {
     BigInt& operator/=(const BigInt& rhs);
     BigInt& operator%=(IntT rhs);
     BigInt& operator%=(const BigInt& rhs);
+    BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);
 
     // I/O
     // currently accept 2<=base<=36, other value will be 10
-    void Print(size_t base = 10, bool uppercase = false, std::FILE* f = stdout);
-    template <typename>
-    friend std::istream& operator>>(std::istream& in, const BigInt& rhs);
+    //@param: showbase: 0) don't show, 1) 0xabc, 0XA0B, 1a_12, 2) abc_16
+    void Print(size_t base = 10, bool uppercase = false, int showbase = 0,
+               std::FILE* f = stdout) const;
     template <typename>
     friend std::ostream& operator<<(std::ostream& out, const BigInt& rhs);
 
@@ -126,6 +135,11 @@ class BigInt {
     // Shrink size if certain condition is met
     void AutoShrinkSize();
 };
+
+template <typename IntT>
+std::istream& operator>>(std::istream& in, BigInt<IntT>& rhs);
+template <typename IntT>
+std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs);
 
 // non-modifying binary operators
 // Google: prefer to define non-modifying binary operators as non-member func

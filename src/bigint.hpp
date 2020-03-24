@@ -92,6 +92,7 @@ class BigInt {
     BigInt& operator%=(IntT rhs);
     BigInt& operator%=(const BigInt& rhs);
     BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);
+    BigInt& PlainMulEq(const BigInt& rhs);
 
     // I/O
     // currently accept 2<=base<=36, other value will be 10
@@ -150,6 +151,10 @@ BigInt<IntT> operator|(BigInt<IntT> lhs, const BigInt<IntT>& rhs);
 template <typename IntT>
 BigInt<IntT> operator^(BigInt<IntT> lhs, const BigInt<IntT>& rhs);
 template <typename IntT>
+BigInt<IntT> operator<<(BigInt<IntT> lhs, size_t rhs);
+template <typename IntT>
+BigInt<IntT> operator>>(BigInt<IntT> lhs, size_t rhs);
+template <typename IntT>
 BigInt<IntT> operator+(BigInt<IntT> lhs, const BigInt<IntT>& rhs);
 template <typename IntT>
 BigInt<IntT> operator-(BigInt<IntT> lhs, const BigInt<IntT>& rhs);
@@ -192,6 +197,12 @@ extern template BigInt<uint8_t> operator|(BigInt<uint8_t> lhs,
                                           const BigInt<uint8_t>& rhs);
 extern template BigInt<uint8_t> operator^(BigInt<uint8_t> lhs,
                                           const BigInt<uint8_t>& rhs);
+extern template BigInt<uint8_t> operator<<(BigInt<uint8_t> lhs, size_t rhs);
+extern template BigInt<uint8_t> operator>>(BigInt<uint8_t> lhs, size_t rhs);
+extern template std::istream& operator>>(std::istream& in,
+                                         BigInt<uint8_t>& rhs);
+extern template std::ostream& operator<<(std::ostream& out,
+                                         const BigInt<uint8_t>& rhs);
 extern template BigInt<uint8_t> operator+(BigInt<uint8_t> lhs,
                                           const BigInt<uint8_t>& rhs);
 extern template BigInt<uint8_t> operator-(BigInt<uint8_t> lhs,
@@ -211,6 +222,12 @@ extern template BigInt<uint16_t> operator|(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
 extern template BigInt<uint16_t> operator^(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
+extern template BigInt<uint16_t> operator<<(BigInt<uint16_t> lhs, size_t rhs);
+extern template BigInt<uint16_t> operator>>(BigInt<uint16_t> lhs, size_t rhs);
+extern template std::istream& operator>>(std::istream& in,
+                                         BigInt<uint16_t>& rhs);
+extern template std::ostream& operator<<(std::ostream& out,
+                                         const BigInt<uint16_t>& rhs);
 extern template BigInt<uint16_t> operator+(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
 extern template BigInt<uint16_t> operator-(BigInt<uint16_t> lhs,
@@ -230,6 +247,12 @@ extern template BigInt<uint32_t> operator|(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
 extern template BigInt<uint32_t> operator^(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
+extern template BigInt<uint32_t> operator<<(BigInt<uint32_t> lhs, size_t rhs);
+extern template BigInt<uint32_t> operator>>(BigInt<uint32_t> lhs, size_t rhs);
+extern template std::istream& operator>>(std::istream& in,
+                                         BigInt<uint32_t>& rhs);
+extern template std::ostream& operator<<(std::ostream& out,
+                                         const BigInt<uint32_t>& rhs);
 extern template BigInt<uint32_t> operator+(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
 extern template BigInt<uint32_t> operator-(BigInt<uint32_t> lhs,

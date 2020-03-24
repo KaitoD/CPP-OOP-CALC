@@ -1,10 +1,11 @@
 #include "bigint.hpp"
 #include "bigint_addsub.cpp"
 #include "bigint_bit_arith.cpp"
+#include "bigint_divmod.cpp"
 #include "bigint_io.cpp"
+#include "bigint_mul.cpp"
 // If there are other cpp files, include them here,
-// because instanizaiton is only here. Example:
-// #include "bigint_mul.cpp"
+// because instanizaiton is only here.
 namespace calc {
 // constructors
 template <typename IntT>
@@ -12,7 +13,7 @@ BigInt<IntT>::BigInt(int value)
     : cap_(sizeof(int) <= LIMB ? 1 : sizeof(int) / LIMB),
       len_(0),
       val_(new IntT[cap_]) {
-    if (sizeof(int) <= LIMB) {
+    if constexpr (sizeof(int) <= LIMB) {
         val_[0] = IntT(value);
         len_ = 1;
     } else {
@@ -339,31 +340,6 @@ void BigInt<IntT>::AutoShrinkSize() {
     }
 }
 
-// non-modifying binary operators
-// template <typename IntT>
-// BigInt<IntT> operator*(BigInt<IntT> lhs, IntT rhs) {
-// return lhs *= rhs;
-// }
-// template <typename IntT>
-// BigInt<IntT> operator*(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
-// return lhs *= rhs;
-// }
-// template <typename IntT>
-// BigInt<IntT> operator/(BigInt<IntT> lhs, IntT rhs) {
-// return lhs /= rhs;
-// }
-// template <typename IntT>
-// BigInt<IntT> operator/(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
-// return lhs /= rhs;
-// }
-// template <typename IntT>
-// BigInt<IntT> operator%(BigInt<IntT> lhs, IntT rhs) {
-// return lhs %= rhs;
-// }
-// template <typename IntT>
-// BigInt<IntT> operator%(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
-// return lhs %= rhs;
-// }
 #ifndef __cpp_impl_three_way_comparison
 template <typename IntT>
 bool operator<(const BigInt<IntT>& lhs, const BigInt<IntT>& rhs) {
@@ -403,17 +379,22 @@ template BigInt<uint8_t> operator|(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> operator^(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
+template BigInt<uint8_t> operator<<(BigInt<uint8_t> lhs, size_t rhs);
+template BigInt<uint8_t> operator>>(BigInt<uint8_t> lhs, size_t rhs);
+template std::istream& operator>>(std::istream& in, BigInt<uint8_t>& rhs);
+template std::ostream& operator<<(std::ostream& out,
+                                  const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> operator+(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> operator-(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
-// template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs, uint8_t rhs);
+template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs, uint8_t rhs);
 // template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs,
 // const BigInt<uint8_t>& rhs);
-// template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs, uint8_t rhs);
+template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs, uint8_t rhs);
 // template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
 // const BigInt<uint8_t>& rhs);
-// template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
+template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
 // template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
 // const BigInt<uint8_t>& rhs);
 template BigInt<uint16_t> operator&(BigInt<uint16_t> lhs,
@@ -422,17 +403,22 @@ template BigInt<uint16_t> operator|(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator^(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
+template BigInt<uint16_t> operator<<(BigInt<uint16_t> lhs, size_t rhs);
+template BigInt<uint16_t> operator>>(BigInt<uint16_t> lhs, size_t rhs);
+template std::istream& operator>>(std::istream& in, BigInt<uint16_t>& rhs);
+template std::ostream& operator<<(std::ostream& out,
+                                  const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator+(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator-(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
-// template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs, uint16_t rhs);
+template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs, uint16_t rhs);
 // template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs,
 // const BigInt<uint16_t>& rhs);
-// template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs, uint16_t rhs);
+template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs, uint16_t rhs);
 // template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
 // const BigInt<uint16_t>& rhs);
-// template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
+template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
 // template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
 // const BigInt<uint16_t>& rhs);
 template BigInt<uint32_t> operator&(BigInt<uint32_t> lhs,
@@ -441,17 +427,22 @@ template BigInt<uint32_t> operator|(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator^(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
+template BigInt<uint32_t> operator<<(BigInt<uint32_t> lhs, size_t rhs);
+template BigInt<uint32_t> operator>>(BigInt<uint32_t> lhs, size_t rhs);
+template std::istream& operator>>(std::istream& in, BigInt<uint32_t>& rhs);
+template std::ostream& operator<<(std::ostream& out,
+                                  const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator+(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator-(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
-// template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs, uint32_t rhs);
+template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs, uint32_t rhs);
 // template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs,
 // const BigInt<uint32_t>& rhs);
-// template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs, uint32_t rhs);
+template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs, uint32_t rhs);
 // template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
 // const BigInt<uint32_t>& rhs);
-// template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
+template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
 // template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
 // const BigInt<uint32_t>& rhs);
 #ifndef __cpp_impl_three_way_comparison

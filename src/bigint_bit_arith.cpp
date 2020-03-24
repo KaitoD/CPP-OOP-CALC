@@ -60,6 +60,7 @@ BigInt<IntT>& BigInt<IntT>::operator^=(const BigInt& rhs) {
     ShrinkLen();
     return *this;
 }
+// only guarantee non-negative
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator<<=(size_t rhs) {
     size_t q = rhs / LIMB, r = rhs % LIMB;
@@ -126,11 +127,11 @@ BigInt<IntT> operator^(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
     return lhs ^= rhs;
 }
 template <typename IntT>
-BigInt<IntT> operator+(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
-    return lhs += rhs;
+BigInt<IntT> operator<<(BigInt<IntT> lhs, size_t rhs) {
+    return lhs <<= rhs;
 }
 template <typename IntT>
-BigInt<IntT> operator-(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
-    return lhs -= rhs;
+BigInt<IntT> operator>>(BigInt<IntT> lhs, size_t rhs) {
+    return lhs >>= rhs;
 }
 }  // namespace calc

@@ -113,4 +113,14 @@ BigInt<IntT> BigInt<IntT>::operator-() const {
     BigInt<IntT> obj = *this;
     return obj.ToOpposite();
 }
+
+// non-modifying binary operators
+template <typename IntT>
+BigInt<IntT> operator+(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs += rhs;
+}
+template <typename IntT>
+BigInt<IntT> operator-(BigInt<IntT> lhs, const BigInt<IntT>& rhs) {
+    return lhs -= rhs;
+}
 }  // namespace calc

@@ -139,11 +139,11 @@ BigInt& operator^=(const BigInt& rhs);
 
 #### `BigInt& operator<<=(size_t rhs);`
 
-调用了`AutoShrinkSize()`, `AutoExpandSize()`。 结果段数手动进行了调整（因为最多调1）。
+调用了`AutoShrinkSize()`, `AutoExpandSize()`。 结果段数手动进行了调整（因为最多调1）。 负数的结果不总能保障，目前是直接移位，不单独处理符号位。
 
 #### `BigInt& operator>>=(size_t rhs);`
 
-调用了`AutoShrinkSize()`。 结果段数手动进行了调整（因为最多调1）。
+调用了`AutoShrinkSize()`。 结果段数手动进行了调整（因为最多调1）。 负数的结果不总能保障，目前是直接移位，不单独处理符号位。
 
 #### `std::weak_ordering operator<=>(const BigInt& rhs) const;`
 
@@ -170,6 +170,8 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 #### `BigInt operator-() const;`
 
 #### `BigInt& operator*=(IntT rhs);`
+
+基础乘法，右乘小的非负数，可以被其他乘法调用。
 
 #### `BigInt& operator*=(const BigInt& rhs);`
 

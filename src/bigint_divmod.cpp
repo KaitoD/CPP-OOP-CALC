@@ -7,6 +7,7 @@ BigInt<IntT>& BigInt<IntT>::operator/=(IntT rhs) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator%=(IntT rhs) {
+    if (rhs == 0) return *this;
     const uint64_t limb_mod = (1l << LIMB) % rhs;
     uint64_t cur_mod = 1;
     uint64_t tot = 0;

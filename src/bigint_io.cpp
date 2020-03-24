@@ -1,6 +1,7 @@
-#include "bigint.hpp"
 #include <string>
+#include "bigint.hpp"
 namespace calc {
+// FIXME(weiz): 输入输出目前没有支持负数！！！十进制大概应该支持负数
 // constructors
 // construct by \0 terminated c-style string, base=0 is auto-detect
 template <typename IntT>
@@ -27,6 +28,18 @@ BigInt<IntT>::BigInt(const char* str, size_t base) : BigInt() {
         }
     } else if (base > 36 || base < 2) {
         base = 10;
+    } else {
+        if (str[0] == '0') {
+            if (str[1] == 'B' || str[1] == 'b') {
+                if (base != 2) return;
+                p = 2;
+            } else if (str[1] == 'X' || str[1] == 'x') {
+                if (base != 16) return;
+                p = 2;
+            } else {
+                if (base == 8) p = 1;
+            }
+        }
     }
     size_t tmp_base = base;
     size_t log_base = 0;
@@ -318,7 +331,15 @@ template <typename IntT>
 std::istream& operator>>(std::istream& in, BigInt<IntT>& rhs) {
     std::string str;
     in >> str;
-    rhs = str;
+    if (in.flags() & in.hex) {
+        BigInt<IntT> tmp_obj(str, 16);
+        rhs = std::move(tmp_obj);
+    } else if (in.flags() & in.oct) {
+        BigInt<IntT> tmp_obj(str, 8);
+        rhs = std::move(tmp_obj);
+    } else {
+        rhs = str;
+    }
     return in;
 }
 template <typename IntT>

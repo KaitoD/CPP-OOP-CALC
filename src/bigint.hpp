@@ -138,6 +138,7 @@ class BigInt {
     void AutoShrinkSize();
 };
 
+// stream operators
 template <typename IntT>
 std::istream& operator>>(std::istream& in, BigInt<IntT>& rhs);
 template <typename IntT>

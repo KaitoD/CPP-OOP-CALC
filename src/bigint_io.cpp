@@ -1,4 +1,5 @@
 #include "bigint.hpp"
+#include <string>
 namespace calc {
 // constructors
 // construct by \0 terminated c-style string, base=0 is auto-detect
@@ -28,7 +29,7 @@ BigInt<IntT>::BigInt(const char* str, size_t base) : BigInt() {
         base = 10;
     }
     size_t tmp_base = base;
-    IntT log_base = 0;
+    size_t log_base = 0;
     while (!(tmp_base & 1)) {
         ++log_base;
         tmp_base >>= 1;
@@ -45,7 +46,7 @@ BigInt<IntT>::BigInt(const char* str, size_t base) : BigInt() {
         }
     } else {
         while (std::isalnum(str[p]) && decode[int(str[p] - '0')] < base) {
-            *this *= base;
+            *this *= static_cast<IntT>(base);
             *this += decode[int(str[p++] - '0')];
         }
     }
@@ -66,7 +67,7 @@ BigInt<IntT>& BigInt<IntT>::operator=(const char* str) {
     if (str[0] != '0') {
         while (std::isdigit(str[p])) {
             *this = (*this << 3) + (*this << 1);
-            *this += int(str[p++] - '0');
+            *this += IntT(str[p++] - '0');
         }
     } else if (str[1] == 'B' || str[1] == 'b') {
         p = 2;
@@ -84,7 +85,7 @@ BigInt<IntT>& BigInt<IntT>::operator=(const char* str) {
         p = 1;
         while (std::isdigit(str[p]) && int(str[p] - '0') < 8) {
             *this <<= 3;
-            *this += int(str[p++] - '0');
+            *this += IntT(str[p++] - '0');
         }
     }
     return *this;
@@ -96,7 +97,7 @@ BigInt<IntT>& BigInt<IntT>::operator=(const std::string& str) {
 }
 template <typename IntT>
 BigInt<IntT>::operator std::string() const {
-    return ToOpposite(10, false, 0);
+    return ToString(10, false, 0);
 }
 template <typename IntT>
 std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
@@ -106,11 +107,10 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
     if (base < 2 || base > 36) base = 10;
     char charset[37] = "0123456789abcdefghijklmnopqrstuvwxyz";
     if (uppercase) std::strcpy(charset + 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    IntT mask = IntT(1), offset;
-    ShrinkLen();
+    IntT mask = IntT(1);
     size_t i = 0;
     size_t tmp_base = base;
-    IntT log_base = 0;
+    size_t log_base = 0, offset;
     bool suffix_base = (showbase == 2);
     IntT mask_init = IntT(((IntT(1) << log_base) - 1) << (LIMB - log_base));
     while (!(tmp_base & 1)) {
@@ -158,8 +158,8 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
             mask = mask_init;
         }
     } else if (tmp_base == 1) {
-        IntT move_len = log_base - LIMB % log_base;
-        IntT cur_move = len_ * LIMB % log_base;
+        size_t move_len = log_base - LIMB % log_base;
+        size_t cur_move = len_ * LIMB % log_base;
         IntT mask_val = IntT((IntT(1) << log_base) - 1);
         offset = LIMB - cur_move;
         if (cur_move && (val_[len_ - 1] >> offset)) {
@@ -198,13 +198,14 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
             tmp_obj.BasicDivEq(static_cast<IntT>(base), &mod);
             rev_str.append(1, charset[mod]);
         }
-        for (size_t i = rev_str.length() - 1; i != size_t(-1); --i)
+        for (i = rev_str.length() - 1; i != size_t(-1); --i)
             str.append(1, rev_str[i]);
     }
     if (suffix_base && base != 10) {
         str.append(1, '_');
         str.append(std::to_string(base));
     }
+    return str;
 }
 
 // I/O
@@ -219,12 +220,11 @@ void BigInt<IntT>::Print(size_t base, bool uppercase, int showbase,
     if (base < 2 || base > 36) base = 10;
     char charset[37] = "0123456789abcdefghijklmnopqrstuvwxyz";
     if (uppercase) std::strcpy(charset + 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    IntT mask = IntT(1), offset;
-    ShrinkLen();
+    IntT mask = IntT(1);
     char limb_str[LIMB + 1];
     size_t i = 0, j = 0;
     size_t tmp_base = base;
-    IntT log_base = 0;
+    size_t log_base = 0, offset;
     bool suffix_base = (showbase == 2);
     IntT mask_init = IntT(((IntT(1) << log_base) - 1) << (LIMB - log_base));
     while (!(tmp_base & 1)) {
@@ -271,8 +271,8 @@ void BigInt<IntT>::Print(size_t base, bool uppercase, int showbase,
             mask = mask_init;
         }
     } else if (tmp_base == 1) {
-        IntT move_len = log_base - LIMB % log_base;
-        IntT cur_move = len_ * LIMB % log_base;
+        size_t move_len = log_base - LIMB % log_base;
+        size_t cur_move = len_ * LIMB % log_base;
         IntT mask_val = IntT((IntT(1) << log_base) - 1);
         offset = LIMB - cur_move;
         if (cur_move && (val_[len_ - 1] >> offset)) {
@@ -329,9 +329,9 @@ std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
     }
     char charset[] = "0123456789abcdef";
     if (out.flags() & out.uppercase) std::strcpy(charset + 10, "ABCDEF");
-    IntT mask = IntT(1), offset;
-    char limb_str[rhs.LIMB + 1];
-    size_t i = 0, j = 0;
+    IntT mask = IntT(1);
+    char limb_str[(sizeof(IntT) << 3) + 1];
+    size_t i = 0, j = 0, offset;
     if (out.flags() & out.hex) {
         IntT mask_init = IntT(IntT(15) << (rhs.LIMB - 4));
         if (out.flags() & out.showbase) {
@@ -352,15 +352,15 @@ std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
                 mask >>= 4;
                 offset -= 4;
             }
-            out.write(limb_str, j);
+            out.write(limb_str, static_cast<std::streamsize>(j));
             offset = rhs.LIMB - 4;
             mask = mask_init;
         }
     } else if (out.flags() & out.oct) {
         IntT mask_init = IntT(IntT(7) << (rhs.LIMB - 3));
         if (out.flags() & out.showbase) out.write("0", 1);
-        IntT move_len = 3 - rhs.LIMB % 3;
-        IntT cur_move = rhs.len_ * rhs.LIMB % 3;
+        size_t move_len = 3 - rhs.LIMB % 3;
+        size_t cur_move = rhs.len_ * rhs.LIMB % 3;
         IntT mask_val = IntT((IntT(1) << 3) - 1);
         offset = rhs.LIMB - cur_move;
         if (cur_move && (rhs.val_[rhs.len_ - 1] >> offset)) {
@@ -383,7 +383,7 @@ std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
                 mask >>= 3;
                 offset -= 3;
             }
-            out.write(limb_str, j);
+            out.write(limb_str, static_cast<std::streamsize>(j));
             cur_move = (cur_move + move_len) % 3;
             offset = rhs.LIMB - cur_move;
             if (cur_move) {
@@ -398,7 +398,8 @@ std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
         }
     } else {
         std::string str = rhs.ToString(10, false, 0);
-        out.write(str.data(), str.size());
+        out.write(str.data(), static_cast<std::streamsize>(str.size()));
     }
+    return out;
 }
 }  // namespace calc

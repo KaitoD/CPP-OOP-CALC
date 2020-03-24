@@ -29,7 +29,7 @@ BigInt<IntT>& BigInt<IntT>::operator*=(IntT rhs) {
         t >>= LIMB;
         if (t) {
             SetLen(len_ + 1, true);
-            val_[len_ - 1] = t;
+            val_[len_ - 1] = static_cast<IntT>(t);
         }
     }
 

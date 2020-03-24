@@ -10,10 +10,10 @@ namespace calc {
 // constructors
 template <typename IntT>
 BigInt<IntT>::BigInt(int value)
-    : cap_(sizeof(int) <= LIMB ? 1 : sizeof(int) / LIMB),
+    : cap_(sizeof(int) * 8 <= LIMB ? 1 : sizeof(int) * 8 / LIMB),
       len_(0),
       val_(new IntT[cap_]) {
-    if constexpr (sizeof(int) <= LIMB) {
+    if constexpr (sizeof(int) * 8 <= LIMB) {
         val_[0] = IntT(value);
         len_ = 1;
     } else {
@@ -265,7 +265,8 @@ int BigInt<IntT>::Compare(const BigInt& rhs) const {
 
 // private constructor
 template <typename IntT>
-BigInt<IntT>::BigInt(const IntT* data, size_t length) : cap_(1) {
+BigInt<IntT>::BigInt(const IntT* data, size_t length) {
+    cap_ = 1;
     if (length == 0) {
         len_ = 1;
         val_ = new IntT[1];
@@ -323,6 +324,7 @@ void BigInt<IntT>::Resize(size_t new_cap) {
     }
     std::swap(val_, tmp_val);
     delete[] tmp_val;
+    cap_ = new_cap;
 }
 template <typename IntT>
 void BigInt<IntT>::AutoExpandSize(size_t target_len) {

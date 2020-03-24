@@ -7,8 +7,8 @@ BigInt<IntT>& BigInt<IntT>::operator/=(IntT rhs) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator%=(IntT rhs) {
-    const IntT limb_mod = (1l << LIMB) % rhs;
-    IntT cur_mod = 1;
+    const uint64_t limb_mod = (1l << LIMB) % rhs;
+    uint64_t cur_mod = 1;
     uint64_t tot = 0;
     if (limb_mod == 0) {
         tot = val_[0] % rhs;
@@ -20,13 +20,12 @@ BigInt<IntT>& BigInt<IntT>::operator%=(IntT rhs) {
     }
     if (len_ > 1) std::fill(val_ + 1, val_ + len_, IntT(0));
     len_ = 1;
-    val_[0] = tot;
+    val_[0] = IntT(tot);
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::BasicDivEq(IntT rhs, IntT* mod) {
     if (rhs == 0 || rhs == 1) return *this;
-    IntT r = 0;
     uint64_t t = 0;
     bool sign = Sign();
     if (sign) ToOpposite();
@@ -44,13 +43,13 @@ BigInt<IntT>& BigInt<IntT>::BasicDivEq(IntT rhs, IntT* mod) {
     } else {
         for (size_t i = len_ - 1; i != size_t(-1); --i) {
             t = ((t % rhs) << LIMB) | val_[i];
-            val_[i] = t / rhs;
+            val_[i] = IntT(t / rhs);
         }
     }
 
     if (sign) ToOpposite();
     ShrinkLen();
-    if (mod) *mod = t % rhs;
+    if (mod) *mod = IntT(t % rhs);
     return *this;
 }
 

@@ -4,7 +4,7 @@ namespace calc {
 // bit arithmetic
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::ToBitInv() {
-    for (size_t i = 0; i < len_; ++i) val_[i] = ~val_[i];
+    for (size_t i = 0; i < len_; ++i) val_[i] = IntT(~val_[i]);
     return *this;
 }
 template <typename IntT>
@@ -55,7 +55,7 @@ BigInt<IntT>& BigInt<IntT>::operator^=(const BigInt& rhs) {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] ^= rhs.val_[i];
         // implicit alignment of len_
         if (rhs.Sign())
-            for (size_t i = rhs.len_; i < len_; ++i) val_[i] = ~val_[i];
+            for (size_t i = rhs.len_; i < len_; ++i) val_[i] = IntT(~val_[i]);
     }
     ShrinkLen();
     return *this;
@@ -79,7 +79,8 @@ BigInt<IntT>& BigInt<IntT>::operator<<=(size_t rhs) {
             }
             val_[q] = static_cast<IntT>(val_[0] << r);
         } else {
-            for (size_t i = new_len - 1; i > q; --i) val_[i] = val_[i - q];
+            // caution q==0
+            for (size_t i = new_len - 1; i != q - 1; --i) val_[i] = val_[i - q];
         }
         if (q != 0) std::fill(val_, val_ + q, IntT(0));
         len_ = new_len;

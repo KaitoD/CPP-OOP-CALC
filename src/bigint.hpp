@@ -1,5 +1,5 @@
-#ifndef _BIGINT_HPP_
-#define _BIGINT_HPP_
+#ifndef BIGINT_HPP
+#define BIGINT_HPP
 #include <cstring>
 #include <iostream>
 #include <random>
@@ -99,8 +99,9 @@ class BigInt {
     //@param: showbase: 0) don't show, 1) 0xabc, 0XA0B, 1a_12, 2) abc_16
     void Print(size_t base = 10, bool uppercase = false, int showbase = 0,
                std::FILE* f = stdout) const;
-    template <typename>
-    friend std::ostream& operator<<(std::ostream& out, const BigInt& rhs);
+    template <typename _IntT>
+    friend std::ostream& operator<<(std::ostream& out,
+                                    const BigInt<_IntT>& rhs);
 
    private:
     // construct from raw data
@@ -109,9 +110,9 @@ class BigInt {
     // data
     static constexpr size_t LIMB = sizeof(IntT) << 3;
     static constexpr size_t MAX_CAP = size_t(1) << 63;
-    size_t cap_;  // capacity, currently must be *a power of 2*
-    size_t len_;  // actual used length
-    IntT* val_;
+    size_t cap_ = 1;  // capacity, currently must be *a power of 2*
+    size_t len_ = 1;  // actual used length
+    IntT* val_ = nullptr;
 
     // random device
     // NOLINTNEXTLINE: c++17 ok

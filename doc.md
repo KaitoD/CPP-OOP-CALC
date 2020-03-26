@@ -165,11 +165,11 @@ BigInt& operator^=(const BigInt& rhs);
 
 #### `BigInt& operator<<=(size_t rhs);`
 
-调用了`AutoShrinkSize()`, `AutoExpandSize()`。 结果段数手动进行了调整（因为最多调1）。 负数的结果不总能保障，目前是直接移位，不单独处理符号位。
+调用了`ShrinkLen()`, `AutoShrinkSize()`, `AutoExpandSize()`。保留符号。
 
 #### `BigInt& operator>>=(size_t rhs);`
 
-调用了`AutoShrinkSize()`。 结果段数手动进行了调整（因为最多调1）。 负数的结果不总能保障，目前是直接移位，不单独处理符号位。
+调用了`ShrinkLen()`, `AutoShrinkSize()`。保留符号。
 
 #### `std::weak_ordering operator<=>(const BigInt& rhs) const;`
 
@@ -223,17 +223,19 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 
 #### `BigInt& operator/=(IntT rhs);`
 
-基础除法。除数为0不进行任何操作。除1不会浪费时间。注意这里除数非负。
+基础除法。调用`BasicDivEq(IntT, IntT*);`，最后一个参数为默认的`nullptr`。
 
 #### `BigInt& operator/=(const BigInt& rhs);`
 
 #### `BigInt& operator%=(IntT rhs);`
 
-基础取模。并没有做除法，而是按照每一位的`2^LIMB % rhs`进行求和。 模0不进行任何操作。
+基础取模。并没有做除法，而是按照每一位的`2^LIMB % rhs`进行求和（然而一系列模操作仍可能拖慢速度）。 模0不进行任何操作。
 
 #### `BigInt& operator%=(const BigInt& rhs);`
 
 #### `BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);`
+
+基础除法，向零取整。除数为0不进行任何操作。除1不会浪费时间。注意这里除数非负。 函数实现处理了被除数为负数的情况，但是此时模的结果设置为非负的，也就是区间为`[0, rhs)`。 也就是此时`(a / b) * b - a == mod`。
 
 #### `BigInt& PlainMulEq(const BigInt& rhs);`
 

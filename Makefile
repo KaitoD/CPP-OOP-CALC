@@ -55,7 +55,7 @@ endif
 # set targets here
 RELEASE_TARGETS=
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test
-BENCHMARK_TARGETS=bigint_bit_arith_benchmark
+BENCHMARK_TARGETS=bigint_bit_arith_benchmark bigint_simple_arith_benchmark
 
 
 ifeq ($(MODE),debug)
@@ -76,6 +76,14 @@ endif
 
 # recipes start here
 all: $(TARGETS)
+
+bigint_simple_arith_benchmark: compile/bigint_simple_arith_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_simple_arith_benchmark.o compile/bigint.o \
+		-o bigint_simple_arith_benchmark
+
+compile/bigint_simple_arith_benchmark.o: src/bigint.hpp tests/bigint_simple_arith_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_simple_arith_benchmark.cpp \
+		-o compile/bigint_simple_arith_benchmark.o
 
 bigint_bit_arith_benchmark: compile/bigint_bit_arith_benchmark.o compile/bigint.o
 	$(CXX) $(CXXFLAGS) compile/bigint_bit_arith_benchmark.o compile/bigint.o \

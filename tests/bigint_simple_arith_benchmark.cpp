@@ -26,16 +26,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     for (int i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng));
         b.GenRandom(ran(ran_eng));
-        res ^= a & b;
-        res ^= a | b;
-        res ^= a ^ b;
+        res ^= a + b;
+        res ^= a - b;
         if (a.Length() > b.Length()) {
-            res ^= ~a;
-            res ^= a << (ran(ran_dev) % 64);
+            res ^= -a;
             tot_len += a.Length();
         } else {
-            res ^= ~b;
-            res ^= b << (ran(ran_dev) % 64);
+            res ^= -b;
             tot_len += b.Length();
         }
     }
@@ -43,10 +40,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     duration = (end_time - start_time) - duration;
     std::printf("Tested & | ^ << >> (l/r shift) ~");
     std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
-    std::printf("10 operations per round.\n");
+    std::printf("3 operations per round.\n");
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",
-                duration.count() / 1e3 / 10.0 / tot_len);
+                duration.count() / 1e3 / 3.0 / tot_len);
     std::cout << (res & calc::BigInt<>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
     return 0;

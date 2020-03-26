@@ -2,5 +2,10 @@
 
 - 2020/2/26 KaitoD creates the repo.
 - 2020/3/15 Weiz: BigInt basic structure.
-- 2020/3/15 Weiz adds and keeps updating [doc.md](doc.md).
+- 2020/3/15 Weiz adds and keeps updating [doc.md].
 - 2020/3/24 Weiz: BigInt to basic mul/div/mod, keeps updating doc.
+- 2020/3/26 Weiz fixes (some of the) bugs in BigInt.
+`uint_bit_arith_test` and `uint_simple_arith_test` passed (maybe).
+Decimal output may be reliable (be careful though).
+
+[doc.md]: doc.md

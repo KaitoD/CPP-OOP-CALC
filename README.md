@@ -7,5 +7,6 @@
 - 2020/3/26 Weiz fixes (some of the) bugs in BigInt.
 `uint_bit_arith_test` and `uint_simple_arith_test` passed (maybe).
 Decimal output may be reliable (be careful though).
+- 2020/3/27 FFT multiplication, with test and benchmark.
 
 [doc.md]: doc.md

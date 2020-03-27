@@ -1,5 +1,6 @@
 #ifndef BIGINT_HPP
 #define BIGINT_HPP
+#include <complex>
 #include <cstring>
 #include <iostream>
 #include <random>
@@ -15,6 +16,7 @@ namespace calc {
 template <typename IntT = uint16_t>
 class BigInt {
    public:
+    bool is_signed_ = true;
     // constructors
     explicit BigInt(int value = 0);
     // copy constructor
@@ -93,6 +95,12 @@ class BigInt {
     BigInt& operator%=(const BigInt& rhs);
     BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);
     BigInt& PlainMulEq(const BigInt& rhs);
+    BigInt& FFTMulEq(const BigInt& rhs);
+
+    // non-modifying
+    static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
+    static BigInt FFTMul(BigInt lhs, const BigInt& rhs);
+    static BigInt BasicDiv(BigInt lhs, IntT rhs, IntT* mod = nullptr);
 
     // I/O
     // currently accept 2<=base<=36, other value will be 10
@@ -136,6 +144,11 @@ class BigInt {
     void AutoExpandSize(size_t target_len);
     // Shrink size if certain condition is met
     void AutoShrinkSize();
+
+    // FFT
+    template <typename T>
+    static void BitRevSort(T* a, size_t n);
+    static void FFT(std::complex<double>* dest, size_t n, bool inv);
 };
 
 // stream operators

@@ -14,7 +14,6 @@ BigInt<IntT>& BigInt<IntT>::operator+=(IntT rhs) {
     // actual overflow is not indicated by variable $(overflow)
     if (!sign && Sign()) {
         SetLen(len_ + 1, false);
-        val_[len_ - 1] = IntT(0);
     } else {
         ShrinkLen();
     }
@@ -27,7 +26,7 @@ BigInt<IntT>& BigInt<IntT>::operator+=(const BigInt& rhs) {
     auto rhs_sign = rhs.Sign();
     auto rhs_empty_limb = rhs_sign ? IntT(-1) : IntT(0);
     if (len_ <= rhs.len_) {
-        if (len_ < rhs.len_) SetLen(rhs.len_, false);
+        if (len_ < rhs.len_) SetLen(rhs.len_, true);
         for (size_t i = 0; i < len_; ++i) {
             val_[i] += overflow + rhs.val_[i];
             if (val_[i] < rhs.val_[i] || (overflow && val_[i] <= rhs.val_[i]))
@@ -84,7 +83,6 @@ BigInt<IntT>& BigInt<IntT>::operator++() {
     }
     if (Sign() && !sign) {
         SetLen(len_ + 1, false);
-        val_[len_ - 1] = IntT(0);
     } else {
         ShrinkLen();
     }

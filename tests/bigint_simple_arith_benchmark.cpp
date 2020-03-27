@@ -9,23 +9,23 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::mt19937 ran_eng(ran_dev());
     std::uniform_int_distribution<uint16_t> ran;
     size_t tot_len = 0;
-    int test_count = 512;
+    size_t test_count = 512;
     // eliminate time for random generate
     auto start_time = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < test_count; ++i) {
+    for (size_t i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng));
         tot_len += a.Length();
     }
     auto end_time = std::chrono::high_resolution_clock::now();
     auto rand_dur = end_time - start_time;
-    rand_dur /= tot_len;
+    rand_dur /= static_cast<int64_t>(tot_len);
     std::printf("Time per limb for random generation is %.3lfus.\n",
                 rand_dur.count() / 1e3);
     tot_len = 0;
     a.Shrink();
     b.Shrink();
     start_time = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < test_count; ++i) {
+    for (size_t i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng));
         b.GenRandom(ran(ran_eng));
         res ^= a + b;
@@ -41,7 +41,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     end_time = std::chrono::high_resolution_clock::now();
     auto duration = (end_time - start_time) - rand_dur * tot_len;
     std::printf("Tested + -");
-    std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
+    std::printf(" on %lu samples. Total length is %lu.\n", test_count, tot_len);
     std::printf("3 operations per round.\n");
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",
@@ -54,7 +54,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     res.Shrink();
     uint16_t c;
     start_time = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < test_count; ++i) {
+    for (size_t i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng));
         c = ran(ran_eng);
         res ^= a * c;
@@ -65,7 +65,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     end_time = std::chrono::high_resolution_clock::now();
     duration = (end_time - start_time) - rand_dur * (tot_len + test_count);
     std::printf("Tested * / %% (big@small)");
-    std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
+    std::printf(" on %lu samples. Total length is %lu.\n", test_count, tot_len);
     std::printf("3 operations per round.\n");
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",

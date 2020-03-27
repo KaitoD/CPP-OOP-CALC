@@ -8,6 +8,15 @@
 
 IntT模板参数指明每一段都使用了什么数据类型存储，应为长度不超过最长基本类型一半 的非负整数类型。目前显式实例化的有`uint8_t, uint16_t, uint32_t`。
 
+### 对象的参数`bool is_signed_ = true;`
+
+【试验功能】指明这一对象是否是有符号整数。如果设置为`false`，位运算的效果将受到影响。只要算符两端有一个数设置为`false`，进行位运算得到的结果将自动补必要的前导0，变成非负数。这一参数会随着对象拷贝和移动，被移动的对象这一参数回归`true`。 同时输出无论正负都将输出非负数。 *特别注意* 其它运算的结果并不受这个参数的影响。
+
+这一参数目前的作用是保证位运算的符号安全或者输出内存中的数据表示，不加符号。
+
+事实上，会产生符号问题的只有`~a`，其它运算均能保证非负数与非负数运算一定合理地得到一个非负数。
+其它位运算连带着加入了这个参数的影响，以应对不全是非负数的情况，然而这一情况不应该出现。
+
 ### 成员变量
 
 ``` {.cpp}
@@ -94,6 +103,10 @@ while (len_ > 1 && some_condition()) --len_;
 
 读入字符串的赋值情况。自动检测进制。
 
+#### `explicit operator bool() const;`
+
+转换为bool，可用于条件语句。非0即为真。
+
 #### `explicit operator std::string() const;`
 
 转换至字符串。10进制。
@@ -101,10 +114,6 @@ while (len_ > 1 && some_condition()) --len_;
 #### `std::string ToString(size_t base, bool uppercase = false, int showbase = 0) const;`
 
 输出至字符串，可选进制`[2, 36]`，可选大小写。showbase为0时不添加前后缀，为1时对2, 8, 16进制添加前缀，其余非10进制添加`_$(base)`形式的后缀（WolframAlpha支持），为2时对于任何非10进制均添加上述后缀。
-
-#### `explicit operator bool() const;`
-
-转换为bool，可用于条件语句。非0即为真。
 
 ### 基本操作
 
@@ -171,6 +180,8 @@ BigInt& operator^=(const BigInt& rhs);
 
 调用了`ShrinkLen()`, `AutoShrinkSize()`。保留符号。
 
+### 比较
+
 #### `std::weak_ordering operator<=>(const BigInt& rhs) const;`
 
 C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
@@ -178,6 +189,8 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 #### `int Compare(const BigInt& rhs) const;`
 
 比较函数。若`operator<=>`能够使用则这个函数不会被声明和定义。
+
+### 加减法
 
 #### `BigInt& operator+=(IntT& rhs);`
 
@@ -215,11 +228,15 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 
 相反数。`-a == ++~a`。
 
+### 乘、除、模
+
 #### `BigInt& operator*=(IntT rhs);`
 
 基础乘法，右乘小的非负数，可以被其他乘法调用。 对于2的幂进行了位移优化。
 
 #### `BigInt& operator*=(const BigInt& rhs);`
+
+其他函数调用乘法应该调用乘号，它会自动分配合适的乘法规则。 不建议调用特定乘法方法。
 
 #### `BigInt& operator/=(IntT rhs);`
 
@@ -239,6 +256,19 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 
 #### `BigInt& PlainMulEq(const BigInt& rhs);`
 
+朴素 *O(n\^2)* 乘法。在长度很短的时候因为常数小，或许略胜一筹。
+
+#### `BigInt& FFTMulEq(const BigInt& rhs);`
+
+FFT乘法。并没有检测长度，因此需要调用的时候保证长度不太大，否则会有误差。
+
+### 特殊运算的非修改版本
+
+``` {.cpp}
+static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
+static BigInt FFTMul(BigInt lhs, const BigInt& rhs);
+```
+
 ### 输入输出
 
 `src/bigint_io.cpp`包含广义的输入输出，即字符串转化的实现也在里面。
@@ -257,7 +287,7 @@ C风格的输出。与`ToString(size_t, bool, int)`相同，但是进制是2的�
 
 #### `void SetLen(size_t new_len, bool preserve_sign);`
 
-依赖`Sign()`, `AutoShrinkSize()`, `AutoExpandSize()`。 设置段数为`new_len`，范围`[1, MAX_CAP]`，接受缩短和延长。 延长的时候非负数则高位补`0`，负数补`-1`，使得补码下数值不变。 如果`new_len == len_`则无影响。 如果是缩短且`preserve_sign == true`则会把最高段的最高位也切掉，设置为符号位。 延长的时候`preserve_sign`没有影响。 *非常建议* 全用这个方法改变`len_`。
+依赖`Sign()`, `AutoShrinkSize()`, `AutoExpandSize()`。 设置段数为`new_len`，范围`[1, MAX_CAP]`，接受缩短和延长。 延长的时候若`preserve_sign == false`则高位始终补`0`，否则非负数则高位补`0`，负数补`-1`，使得补码下数值不变。 如果`new_len == len_`则无影响。 如果是缩短且`preserve_sign == true`则会把最高段的最高位也切掉，设置为符号位。 *非常建议* 全用这个方法改变`len_`。
 
 #### `void ShrinkLen();`
 
@@ -274,6 +304,15 @@ C风格的输出。与`ToString(size_t, bool, int)`相同，但是进制是2的�
 #### `void AutoShrinkSize();`
 
 依赖`Resize(size_t)`。只有在`len_ <= (cap_ >> 3)`时缩短`cap_`至最小。 如果愿意的话可以调用，但要注意到重新分配内存的开销并不太小。 此函数永远不增加`cap_`。增加`cap_`请看`AutoExpandSize()`。
+
+### FFT乘法依赖的函数
+
+``` {.cpp}
+template <typename T> static void BitRevSort(T* a, size_t n);
+static void FFT(std::complex<double>* dest, size_t n, bool inv);
+```
+
+### 流输入输出（非成员函数）
 
 #### `std::istream& operator>>(std::istream& in, BigInt<IntT>& rhs);`
 

@@ -63,6 +63,12 @@ BigInt<IntT>& BigInt<IntT>::BasicDivEq(IntT rhs, IntT* mod) {
     return *this;
 }
 
+// non-modifying
+template <typename IntT>
+BigInt<IntT> BigInt<IntT>::BasicDiv(BigInt lhs, IntT rhs, IntT* mod) {
+    return lhs.BasicDivEq(rhs, mod);
+}
+
 // non-modifying binary operators
 template <typename IntT>
 BigInt<IntT> operator/(BigInt<IntT> lhs, IntT rhs) {

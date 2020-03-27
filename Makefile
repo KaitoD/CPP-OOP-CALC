@@ -54,8 +54,10 @@ endif
 
 # set targets here
 RELEASE_TARGETS=
-DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test
-BENCHMARK_TARGETS=bigint_bit_arith_benchmark bigint_simple_arith_benchmark
+DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
+			  bigint_mul_test
+BENCHMARK_TARGETS=bigint_bit_arith_benchmark bigint_simple_arith_benchmark \
+				  bigint_mul_benchmark
 
 
 ifeq ($(MODE),debug)
@@ -77,50 +79,56 @@ endif
 # recipes start here
 all: $(TARGETS)
 
-bigint_simple_arith_benchmark: compile/bigint_simple_arith_benchmark.o compile/bigint.o
-	$(CXX) $(CXXFLAGS) compile/bigint_simple_arith_benchmark.o compile/bigint.o \
-		-o bigint_simple_arith_benchmark
-
-compile/bigint_simple_arith_benchmark.o: src/bigint.hpp tests/bigint_simple_arith_benchmark.cpp
-	$(CXX) $(CXXFLAGS) -c tests/bigint_simple_arith_benchmark.cpp \
-		-o compile/bigint_simple_arith_benchmark.o
-
-bigint_bit_arith_benchmark: compile/bigint_bit_arith_benchmark.o compile/bigint.o
-	$(CXX) $(CXXFLAGS) compile/bigint_bit_arith_benchmark.o compile/bigint.o \
-		-o bigint_bit_arith_benchmark
-
-compile/bigint_bit_arith_benchmark.o: src/bigint.hpp tests/bigint_bit_arith_benchmark.cpp
-	$(CXX) $(CXXFLAGS) -c tests/bigint_bit_arith_benchmark.cpp \
-		-o compile/bigint_bit_arith_benchmark.o
-
-bigint_bit_arith_test: compile/bigint_bit_arith_test.o compile/bigint.o
-	$(CXX) $(CXXFLAGS) compile/bigint_bit_arith_test.o compile/bigint.o \
-		-o bigint_bit_arith_test
-
-compile/bigint_bit_arith_test.o: src/bigint.hpp tests/bigint_bit_arith_test.cpp
-	$(CXX) $(CXXFLAGS) -c tests/bigint_bit_arith_test.cpp \
-		-o compile/bigint_bit_arith_test.o
-
-bigint_simple_arith_test: compile/bigint_simple_arith_test.o compile/bigint.o
-	$(CXX) $(CXXFLAGS) compile/bigint_simple_arith_test.o compile/bigint.o \
-		-o bigint_simple_arith_test
-
-compile/bigint_simple_arith_test.o: src/bigint.hpp tests/bigint_simple_arith_test.cpp
-	$(CXX) $(CXXFLAGS) -c tests/bigint_simple_arith_test.cpp \
-		-o compile/bigint_simple_arith_test.o
-
-bigint_basic_test: compile/bigint_basic_test.o compile/bigint.o
-	$(CXX) $(CXXFLAGS) compile/bigint_basic_test.o compile/bigint.o \
-		-o bigint_basic_test
-
-compile/bigint_basic_test.o: src/bigint.hpp tests/bigint_basic_test.cpp
-	$(CXX) $(CXXFLAGS) -c tests/bigint_basic_test.cpp \
-		-o compile/bigint_basic_test.o
-
 compile/bigint.o: src/bigint.cpp src/bigint.hpp src/bigint_bit_arith.cpp \
 	src/bigint_io.cpp src/bigint_addsub.cpp src/bigint_mul.cpp \
 	src/bigint_divmod.cpp
 	$(CXX) $(CXXFLAGS) -c src/bigint.cpp -o compile/bigint.o
+
+bigint_basic_test: compile/bigint_basic_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_basic_test.o compile/bigint.o \
+		-o bigint_basic_test
+compile/bigint_basic_test.o: src/bigint.hpp tests/bigint_basic_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_basic_test.cpp \
+		-o compile/bigint_basic_test.o
+
+bigint_bit_arith_test: compile/bigint_bit_arith_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_bit_arith_test.o compile/bigint.o \
+		-o bigint_bit_arith_test
+compile/bigint_bit_arith_test.o: src/bigint.hpp tests/bigint_bit_arith_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_bit_arith_test.cpp \
+		-o compile/bigint_bit_arith_test.o
+bigint_bit_arith_benchmark: compile/bigint_bit_arith_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_bit_arith_benchmark.o compile/bigint.o \
+		-o bigint_bit_arith_benchmark
+compile/bigint_bit_arith_benchmark.o: src/bigint.hpp tests/bigint_bit_arith_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_bit_arith_benchmark.cpp \
+		-o compile/bigint_bit_arith_benchmark.o
+
+bigint_simple_arith_test: compile/bigint_simple_arith_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_simple_arith_test.o compile/bigint.o \
+		-o bigint_simple_arith_test
+compile/bigint_simple_arith_test.o: src/bigint.hpp tests/bigint_simple_arith_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_simple_arith_test.cpp \
+		-o compile/bigint_simple_arith_test.o
+bigint_simple_arith_benchmark: compile/bigint_simple_arith_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_simple_arith_benchmark.o compile/bigint.o \
+		-o bigint_simple_arith_benchmark
+compile/bigint_simple_arith_benchmark.o: src/bigint.hpp tests/bigint_simple_arith_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_simple_arith_benchmark.cpp \
+		-o compile/bigint_simple_arith_benchmark.o
+
+bigint_mul_test: compile/bigint_mul_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_mul_test.o compile/bigint.o \
+		-o bigint_mul_test
+compile/bigint_mul_test.o: src/bigint.hpp tests/bigint_mul_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_mul_test.cpp \
+		-o compile/bigint_mul_test.o
+bigint_mul_benchmark: compile/bigint_mul_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_mul_benchmark.o compile/bigint.o \
+		-o bigint_mul_benchmark
+compile/bigint_mul_benchmark.o: src/bigint.hpp tests/bigint_mul_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_mul_benchmark.cpp \
+		-o compile/bigint_mul_benchmark.o
 
 .PHONY: all clean clean-all
 clean:

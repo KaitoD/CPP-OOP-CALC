@@ -1,10 +1,16 @@
+#include <cassert>
 #include "bigint.hpp"
 namespace calc {
 
 // bit arithmetic
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::ToBitInv() {
-    for (size_t i = 0; i < len_; ++i) val_[i] = IntT(~val_[i]);
+    if (is_signed_ || Sign()) {
+        for (size_t i = 0; i < len_; ++i) val_[i] = IntT(~val_[i]);
+    } else {
+        if (val_[len_ - 1] != IntT(0)) SetLen(len_ + 1, false);
+        for (size_t i = 0; i < len_ - 1; ++i) val_[i] = IntT(~val_[i]);
+    }
     return *this;
 }
 template <typename IntT>
@@ -14,49 +20,58 @@ BigInt<IntT> BigInt<IntT>::operator~() const {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator&=(const BigInt& rhs) {
+    bool ss = is_signed_ && rhs.is_signed_;
+    if (!ss && Sign()) SetLen(len_ + 1, false);
     if (len_ <= rhs.len_) {
         if (len_ < rhs.len_) SetLen(rhs.len_, true);
         for (size_t i = 0; i < len_; ++i) val_[i] &= rhs.val_[i];
     } else {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] &= rhs.val_[i];
         // implicit alignment of len_
-        if (!rhs.Sign()) {
+        if (!ss || !rhs.Sign()) {
             std::fill(val_ + rhs.len_, val_ + len_, IntT(0));
             len_ = rhs.len_;
         }
     }
+    if (!ss && Sign()) SetLen(len_ + 1, false);
     ShrinkLen();
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator|=(const BigInt& rhs) {
+    bool ss = is_signed_ && rhs.is_signed_;
+    if (!ss && Sign()) SetLen(len_ + 1, false);
     if (len_ <= rhs.len_) {
         if (len_ < rhs.len_) SetLen(rhs.len_, true);
         for (size_t i = 0; i < len_; ++i) val_[i] |= rhs.val_[i];
     } else {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] |= rhs.val_[i];
         // implicit alignment of len_
-        if (rhs.Sign()) {
+        if (ss && rhs.Sign()) {
             val_[rhs.len_] = IntT(-1);
             if (rhs.len_ + 1 < len_)
                 std::fill(val_ + rhs.len_ + 1, val_ + len_, IntT(0));
             len_ = rhs.len_ + 1;
         }
     }
+    if (!ss && Sign()) SetLen(len_ + 1, false);
     ShrinkLen();
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator^=(const BigInt& rhs) {
+    bool ss = is_signed_ && rhs.is_signed_;
+    if (!ss && Sign()) SetLen(len_ + 1, false);
     if (len_ <= rhs.len_) {
         if (len_ < rhs.len_) SetLen(rhs.len_, true);
         for (size_t i = 0; i < len_; ++i) val_[i] ^= rhs.val_[i];
     } else {
         for (size_t i = 0; i < rhs.len_; ++i) val_[i] ^= rhs.val_[i];
         // implicit alignment of len_
-        if (rhs.Sign())
+        if (ss && rhs.Sign())
             for (size_t i = rhs.len_; i < len_; ++i) val_[i] = IntT(~val_[i]);
     }
+    if (!ss && Sign()) SetLen(len_ + 1, false);
     ShrinkLen();
     return *this;
 }

@@ -22,7 +22,7 @@ void do_test(calc::BigInt<>& a, calc::BigInt<>& b) {
     std::cout << "~" << a << " == " << ~a << std::endl;
     std::cout << a << " ^ " << ~a << " == " << (a ^ ~a) << std::endl;
 
-    for (int i = 0; i <= 32; ++i) {
+    for (size_t i = 0; i <= 32; ++i) {
         // randomly test half, but border is mandatory
         if ((std::rand() & 1) && i % 8) continue;
         std::cout << std::hex << std::showbase;
@@ -45,5 +45,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     do_test(a.GenRandom(3), b.GenRandom(7, 16));
     std::cout << std::endl;
     do_test(a.GenRandom(3, 16), b.GenRandom(7, 16));
+    std::cout << std::endl;
+    std::cout << "----UNSIGNED----" << std::endl;
+    a.is_signed_ = false;
+    b.is_signed_ = false;
+    do_test(a.GenRandom(3), b.GenRandom(7, 16));
     return 0;
 }

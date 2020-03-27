@@ -2,7 +2,6 @@
 #include <string>
 #include "bigint.hpp"
 namespace calc {
-// FIXME(weiz): 输出目前没有支持负数！！！十进制大概应该支持负数
 // constructors
 // construct by \0 terminated c-style string, base=0 is auto-detect
 template <typename IntT>
@@ -138,7 +137,7 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
     }
     std::string str;
     str.reserve(LIMB * len_ / log_base + 5);
-    bool sign = Sign();
+    bool sign = is_signed_ && Sign();
     if (sign) str.append(1, '-');
     if (showbase == 1) {
         switch (base) {
@@ -279,6 +278,7 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
             IntT mod;
             rev_str.reserve(LIMB * len_ / log_base);
             BigInt<IntT> tmp_obj = *this;
+            if (tmp_obj.Sign()) tmp_obj.SetLen(tmp_obj.len_ + 1, false);
             while (tmp_obj != zero) {
                 tmp_obj.BasicDivEq(static_cast<IntT>(base), &mod);
                 rev_str.append(1, charset[mod]);
@@ -317,7 +317,7 @@ void BigInt<IntT>::Print(size_t base, bool uppercase, int showbase,
         ++log_base;
         tmp_base >>= 1;
     }
-    bool sign = Sign();
+    bool sign = is_signed_ && Sign();
     if (sign && tmp_base == 1) std::fputc('-', f);
     if (showbase == 1) {
         switch (base) {
@@ -490,7 +490,7 @@ std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
     IntT mask = IntT(1);
     char limb_str[(sizeof(IntT) << 3) + 1];
     size_t i = 0, j = 0, offset;
-    bool sign = rhs.Sign();
+    bool sign = rhs.is_signed_ && rhs.Sign();
     if (out.flags() & out.hex) {
         if (sign) {
             out.put('-');

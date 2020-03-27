@@ -22,9 +22,10 @@ BigInt<IntT>& BigInt<IntT>::operator%=(IntT rhs) {
         }
     }
     if (len_ > 1) std::fill(val_ + 1, val_ + len_, IntT(0));
-    len_ = 1;
+    len_ = 2;
     val_[0] = IntT(tot);
     if (sign) ToOpposite();
+    ShrinkLen();
     return *this;
 }
 template <typename IntT>

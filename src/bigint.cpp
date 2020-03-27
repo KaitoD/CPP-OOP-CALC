@@ -1,4 +1,5 @@
 #include "bigint.hpp"
+
 #include "bigint_addsub.cpp"
 #include "bigint_bit_arith.cpp"
 #include "bigint_divmod.cpp"
@@ -120,11 +121,11 @@ template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::CutLen(size_t seg_len, size_t bit_len) {
     if (seg_len > len_) return *this;
     bit_len %= LIMB;
-    if (bit_len != 0 || Sign() == (val_[seg_len - 1] >> (LIMB - 1))) {
+    if (bit_len != 0) {
         SetLen(seg_len, true);
         auto mask = IntT(((IntT(1) << bit_len) - 1) | (IntT(1) << (LIMB - 1)));
         val_[len_ - 1] &= mask;
-    } else {
+    } else if (Sign() != (val_[seg_len - 1] >> (LIMB - 1))) {
         SetLen(seg_len + 1, true);
         val_[len_ - 1] = Sign() ? IntT(-1) : IntT(0);
     }

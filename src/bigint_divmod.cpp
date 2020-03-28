@@ -128,6 +128,7 @@ BigInt<IntT>& BigInt<IntT>::PlainDivEq(const BigInt& rhs, BigInt* mod) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
+	// FIXME(weiz): check if there are pure sign limbs (zero)
     if (rhs == BigInt<IntT>(0)) return *this;
     bool sign = Sign();
     if (sign) ToOpposite();
@@ -276,6 +277,7 @@ BigInt<uint32_t>& BigInt<uint32_t>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
+	// FIXME(weiz): check if there are pure sign limbs (zero)
     if (rhs == BigInt<IntT>(0)) return *this;
     if constexpr (LIMB > 21) return DivEqAlgA(rhs, mod);
     bool sign = Sign();

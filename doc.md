@@ -14,8 +14,7 @@ IntT模板参数指明每一段都使用了什么数据类型存储，应为长�
 
 这一参数目前的作用是保证位运算的符号安全或者输出内存中的数据表示，不加符号。
 
-事实上，会产生符号问题的只有`~a`，其它运算均能保证非负数与非负数运算一定合理地得到一个非负数。
-其它位运算连带着加入了这个参数的影响，以应对不全是非负数的情况，然而这一情况不应该出现。
+事实上，会产生符号问题的只有`~a`，其它运算均能保证非负数与非负数运算一定合理地得到一个非负数。 其它位运算连带着加入了这个参数的影响，以应对不全是非负数的情况，然而这一情况不应该出现。
 
 ### 成员变量
 
@@ -238,17 +237,27 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 
 其他函数调用乘法应该调用乘号，它会自动分配合适的乘法规则。 不建议调用特定乘法方法。
 
+目前的分配规则是两个乘数只要有一个位数很少就分配给`PlainMulEq`，否则分配给`FFTMulEq`。
+
 #### `BigInt& operator/=(IntT rhs);`
 
 基础除法。调用`BasicDivEq(IntT, IntT*);`，最后一个参数为默认的`nullptr`。
 
 #### `BigInt& operator/=(const BigInt& rhs);`
 
+其它函数调用除法应该调用除号，自动分配除法规则。
+
+目前的分配规则是优先分配给`PlainDivEq`，其次优先给`DivEqAlgB`，再优先给`DivEqAlgA`。
+
+如果符合`BasicDivEq`的情况，要分配给`DivEqAlgA`或`DivEqAlgB`，因为`BasicDivEq`受限于参数类型，不能很好地处理余数的符号。（除非不需要余数）
+
 #### `BigInt& operator%=(IntT rhs);`
 
 基础取模。并没有做除法，而是按照每一位的`2^LIMB % rhs`进行求和（然而一系列模操作仍可能拖慢速度）。 模0不进行任何操作。
 
 #### `BigInt& operator%=(const BigInt& rhs);`
+
+与`/=`相同规则调用带余除法，然后把余数移动到`this`。
 
 #### `BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);`
 
@@ -262,11 +271,27 @@ C++20功能。仅在通过宏测试到三路比较运算符可用时调用。
 
 FFT乘法。并没有检测长度，因此需要调用的时候保证长度不太大，否则会有误差。
 
+#### `BigInt& PlainDivEq(const BigInt& rhs, BigInt* mod = nullptr);`
+
+突发奇想的基本除法，需要保证两个运算数的长度都小到`uint64_t`能够表达。 直接组合成`uint64_t`来运算。
+
+#### `BigInt& DivEqAlgA(const BigInt& rhs, BigInt* mod = nullptr);`
+
+竖式除法，每位通过一阶近似来估计。在商的位数少的时候大概比较快。 在特殊情况下会转而调用`PlainDivEq`, `BasicDivEq`。
+
+#### `BigInt& DivEqAlgB(const BigInt& rhs, BigInt* mod = nullptr);`
+
+竖式除法，每位通过二阶近似来估计。与一阶近似没什么差别。 在商的位数少的时候大概比较快。 在特殊情况下会转而调用`DivEqAlgA`, `PlainDivEq`, `BasicDivEq`。
+
 ### 特殊运算的非修改版本
 
 ``` {.cpp}
 static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
 static BigInt FFTMul(BigInt lhs, const BigInt& rhs);
+static BigInt BasicDiv(BigInt lhs, IntT rhs, IntT* mod = nullptr);
+static BigInt PlainDiv(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
+static BigInt DivAlgA(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
+static BigInt DivAlgB(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
 ```
 
 ### 输入输出

@@ -55,9 +55,9 @@ endif
 # set targets here
 RELEASE_TARGETS=
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
-			  bigint_mul_test
+			  bigint_mul_test bigint_divmod_test
 BENCHMARK_TARGETS=bigint_bit_arith_benchmark bigint_simple_arith_benchmark \
-				  bigint_mul_benchmark
+				  bigint_mul_benchmark bigint_divmod_benchmark
 
 
 ifeq ($(MODE),debug)
@@ -129,6 +129,19 @@ bigint_mul_benchmark: compile/bigint_mul_benchmark.o compile/bigint.o
 compile/bigint_mul_benchmark.o: src/bigint.hpp tests/bigint_mul_benchmark.cpp
 	$(CXX) $(CXXFLAGS) -c tests/bigint_mul_benchmark.cpp \
 		-o compile/bigint_mul_benchmark.o
+
+bigint_divmod_test: compile/bigint_divmod_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_divmod_test.o compile/bigint.o \
+		-o bigint_divmod_test
+compile/bigint_divmod_test.o: src/bigint.hpp tests/bigint_divmod_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_divmod_test.cpp \
+		-o compile/bigint_divmod_test.o
+bigint_divmod_benchmark: compile/bigint_divmod_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_divmod_benchmark.o compile/bigint.o \
+		-o bigint_divmod_benchmark
+compile/bigint_divmod_benchmark.o: src/bigint.hpp tests/bigint_divmod_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_divmod_benchmark.cpp \
+		-o compile/bigint_divmod_benchmark.o
 
 .PHONY: all clean clean-all
 clean:

@@ -85,6 +85,7 @@ class BigInt {
     BigInt operator--(int);
     BigInt& ToOpposite();  // modifying version of -a
     BigInt operator-() const;
+    BigInt& ToAbsolute();
 
     // operator *=,/=,%=
     BigInt& operator*=(IntT rhs);
@@ -96,11 +97,18 @@ class BigInt {
     BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);
     BigInt& PlainMulEq(const BigInt& rhs);
     BigInt& FFTMulEq(const BigInt& rhs);
+    BigInt& PlainDivEq(const BigInt& rhs, BigInt* mod = nullptr);
+    BigInt& DivEqAlgA(const BigInt& rhs, BigInt* mod = nullptr);
+    BigInt& DivEqAlgB(const BigInt& rhs, BigInt* mod = nullptr);
 
     // non-modifying
     static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
     static BigInt FFTMul(BigInt lhs, const BigInt& rhs);
     static BigInt BasicDiv(BigInt lhs, IntT rhs, IntT* mod = nullptr);
+    static BigInt PlainDiv(BigInt lhs, const BigInt& rhs,
+                           BigInt* mod = nullptr);
+    static BigInt DivAlgA(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
+    static BigInt DivAlgB(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
 
     // I/O
     // currently accept 2<=base<=36, other value will be 10
@@ -150,6 +158,11 @@ class BigInt {
     static void BitRevSort(T* a, size_t n);
     static void FFT(std::complex<double>* dest, size_t n, bool inv);
 };
+
+// specialization
+// LIMB>21 can't use AlgB, redirect to AlgA
+template <>
+BigInt<uint32_t>& BigInt<uint32_t>::DivEqAlgB(const BigInt& rhs, BigInt* mod);
 
 // stream operators
 template <typename IntT>

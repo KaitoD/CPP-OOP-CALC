@@ -99,6 +99,8 @@ BigInt<IntT>& BigInt<IntT>::FFTMulEq(const BigInt& rhs) {
     delete[] v[1];
     return *this;
 }
+
+// non-modifying
 template <typename IntT>
 BigInt<IntT> BigInt<IntT>::PlainMul(BigInt lhs, const BigInt& rhs) {
     return lhs.PlainMulEq(rhs);

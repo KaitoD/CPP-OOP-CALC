@@ -41,7 +41,7 @@ BigInt<IntT>::BigInt(const BigInt<IntT>& rhs) {
         cap_ = rhs.cap_;
         len_ = rhs.len_;
         val_ = new IntT[rhs.cap_];
-        std::copy(rhs.val_, rhs.val_ + cap_, val_);
+        std::copy(rhs.val_, rhs.val_ + rhs.cap_, val_);
     }
 }
 // move constructor
@@ -70,14 +70,14 @@ BigInt<IntT>& BigInt<IntT>::operator=(const BigInt<IntT>& rhs) {
         std::copy(rhs.val_, rhs.val_ + rhs.len_, val_);
         std::fill(val_ + rhs.len_, val_ + len_, IntT(0));
     } else if (cap_ >= rhs.len_) {
-        std::copy(rhs.val_, rhs.val_ + len_, val_);
+        std::copy(rhs.val_, rhs.val_ + rhs.len_, val_);
     } else {
         delete[] val_;
         val_ = new IntT[rhs.cap_];
         std::copy(rhs.val_, rhs.val_ + rhs.cap_, val_);
+        cap_ = rhs.cap_;
     }
     is_signed_ = rhs.is_signed_;
-    cap_ = rhs.cap_;
     len_ = rhs.len_;
     return *this;
 }
@@ -400,11 +400,11 @@ template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs, uint8_t rhs);
 template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs, uint8_t rhs);
-// template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
-// const BigInt<uint8_t>& rhs);
+template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
+                                   const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
-// template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
-// const BigInt<uint8_t>& rhs);
+template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
+                                   const BigInt<uint8_t>& rhs);
 template BigInt<uint16_t> operator&(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator|(BigInt<uint16_t> lhs,
@@ -424,11 +424,11 @@ template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs, uint16_t rhs);
 template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs, uint16_t rhs);
-// template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
-// const BigInt<uint16_t>& rhs);
+template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
+                                    const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
-// template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
-// const BigInt<uint16_t>& rhs);
+template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
+                                    const BigInt<uint16_t>& rhs);
 template BigInt<uint32_t> operator&(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator|(BigInt<uint32_t> lhs,
@@ -448,11 +448,11 @@ template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs, uint32_t rhs);
 template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs, uint32_t rhs);
-// template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
-// const BigInt<uint32_t>& rhs);
+template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
+                                    const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
-// template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
-// const BigInt<uint32_t>& rhs);
+template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
+                                    const BigInt<uint32_t>& rhs);
 #ifndef __cpp_impl_three_way_comparison
 template bool operator<(const BigInt<uint8_t>& lhs, const BigInt<uint8_t>& rhs);
 template bool operator>(const BigInt<uint8_t>& lhs, const BigInt<uint8_t>& rhs);

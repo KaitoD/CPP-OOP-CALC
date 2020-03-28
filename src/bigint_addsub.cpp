@@ -130,6 +130,13 @@ BigInt<IntT> BigInt<IntT>::operator-() const {
     BigInt<IntT> obj = *this;
     return obj.ToOpposite();
 }
+template <typename IntT>
+BigInt<IntT>& BigInt<IntT>::ToAbsolute() {
+    if (Sign())
+        return ToOpposite();
+    else
+        return *this;
+}
 
 // non-modifying binary operators
 template <typename IntT>

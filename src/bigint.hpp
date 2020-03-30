@@ -47,6 +47,7 @@ class BigInt {
     bool Sign() const;
     bool Parity() const;
     size_t TrailingZero() const;
+    size_t BitLen() const;
     // shrink the size allocated to *a power of 2*
     // @return: capacity after shrink
     size_t Shrink();
@@ -156,6 +157,9 @@ class BigInt {
     template <typename T>
     static void BitRevSort(T* a, size_t n);
     static void FFT(std::complex<double>* dest, size_t n, bool inv);
+
+    friend BigInt<IntT> PowMod(const BigInt<IntT>& a, const BigInt<IntT>& p,
+                               const BigInt<IntT>& n);
 };
 
 // specialization
@@ -168,6 +172,16 @@ template <typename IntT>
 std::istream& operator>>(std::istream& in, BigInt<IntT>& rhs);
 template <typename IntT>
 std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs);
+
+// extended arithmetic
+template <typename IntT>
+BigInt<IntT> PowMod(const BigInt<IntT>& a, const BigInt<IntT>& p,
+                    const BigInt<IntT>& n);
+template <typename IntT>
+BigInt<IntT> GcdBin(BigInt<IntT> a, BigInt<IntT> b);
+template <typename IntT>
+BigInt<IntT> ExtGcdBin(BigInt<IntT> a, BigInt<IntT> b, BigInt<IntT>* x,
+                       BigInt<IntT>* y);
 
 // non-modifying binary operators
 // Google: prefer to define non-modifying binary operators as non-member func

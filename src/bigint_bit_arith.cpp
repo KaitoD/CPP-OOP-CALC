@@ -78,6 +78,7 @@ BigInt<IntT>& BigInt<IntT>::operator^=(const BigInt& rhs) {
 // preserve sign
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator<<=(size_t rhs) {
+    if (!rhs) return *this;
     size_t q = rhs / LIMB, r = rhs % LIMB;
     size_t new_len = len_ + q + (r > 0);
     if (new_len < len_ || new_len > MAX_CAP) new_len = MAX_CAP;  // overflow!
@@ -108,6 +109,7 @@ BigInt<IntT>& BigInt<IntT>::operator<<=(size_t rhs) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator>>=(size_t rhs) {
+    if (!rhs) return *this;
     size_t q = rhs / LIMB, r = rhs % LIMB;
     size_t new_len = len_ - q;
     if (new_len > len_ || new_len == 0) {

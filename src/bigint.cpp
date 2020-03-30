@@ -127,6 +127,13 @@ size_t BigInt<IntT>::TrailingZero() const {
     return i * LIMB + j;
 }
 template <typename IntT>
+size_t BigInt<IntT>::BitLen() const {
+    size_t i = len_ - 1, j = LIMB;
+    while (i > 0 && val_[i] == 0) --i;
+    while (j > 0 && val_[i] < (IntT(1) << (j - 1))) --j;
+    return i * LIMB + j;
+}
+template <typename IntT>
 size_t BigInt<IntT>::Shrink() {
     ShrinkLen();
     size_t target = len_ << 1;

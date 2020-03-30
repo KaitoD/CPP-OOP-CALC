@@ -48,11 +48,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::srand(unsigned(time(nullptr)));
     do_test(a.GenRandom(3), b.GenRandom(7));
     std::cout << std::endl;
-    do_test(a.GenRandom(3, 16), b.GenRandom(7));
+    do_test(a.GenRandom(3).ToOpposite(), b.GenRandom(7));
     std::cout << std::endl;
-    do_test(a.GenRandom(3), b.GenRandom(7, 16));
+    do_test(a.GenRandom(3), b.GenRandom(7).ToOpposite());
     std::cout << std::endl;
-    do_test(a.GenRandom(3, 16), b.GenRandom(7, 16));
+    do_test(a.GenRandom(3).ToOpposite(), b.GenRandom(7).ToOpposite());
     std::cout << std::endl;
     do_more_test(a.GenRandom(3), b.GenRandom(7), uint16_t(std::rand()));
     return 0;

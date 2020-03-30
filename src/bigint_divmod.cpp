@@ -128,7 +128,6 @@ BigInt<IntT>& BigInt<IntT>::PlainDivEq(const BigInt& rhs, BigInt* mod) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
-	// FIXME(weiz): check if there are pure sign limbs (zero)
     if (rhs == BigInt<IntT>(0)) return *this;
     bool sign = Sign();
     if (sign) ToOpposite();
@@ -137,7 +136,9 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
     constexpr uint64_t b = (1l << LIMB);
     if (rhs.Sign()) {
         BigInt<IntT> tmp_obj = -rhs;
-        IntT test_tmp = tmp_obj.val_[tmp_obj.len_ - 1];
+        size_t pos = tmp_obj.len_ - 1;
+        while (!tmp_obj.val_[pos]) --pos;
+        IntT test_tmp = tmp_obj.val_[pos];
         while (test_tmp < (IntT(1) << (LIMB - 1))) {
             test_tmp <<= 1;
             ++mov;
@@ -158,25 +159,24 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
             }
         } else {
             BigInt<IntT> result;
-            result.SetLen(len_ - tmp_obj.len_ + 2, false);
+            result.SetLen(len_ - pos + 1, false);
             if (mov) {
-                v1 = IntT(tmp_obj.val_[tmp_obj.len_ - 1] << mov) |
-                     (tmp_obj.val_[tmp_obj.len_ - 2] >> (LIMB - mov));
-                v2 = IntT(tmp_obj.val_[tmp_obj.len_ - 2] << mov) |
-                     (tmp_obj.val_[tmp_obj.len_ - 3] >> (LIMB - mov));
+                v1 = IntT(tmp_obj.val_[pos] << mov) |
+                     (tmp_obj.val_[pos - 1] >> (LIMB - mov));
+                v2 = IntT(tmp_obj.val_[pos - 1] << mov) |
+                     (tmp_obj.val_[pos - 2] >> (LIMB - mov));
             } else {
-                v1 = tmp_obj.val_[tmp_obj.len_ - 1];
-                v2 = tmp_obj.val_[tmp_obj.len_ - 2];
+                v1 = tmp_obj.val_[pos];
+                v2 = tmp_obj.val_[pos - 1];
             }
             u1 = val_[len_ - 1];
-            for (size_t i = len_ - tmp_obj.len_; i != size_t(-1); --i) {
+            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
                 if (mov) {
-                    u1 = (u1 << mov) |
-                         (val_[i + tmp_obj.len_ - 2] >> (LIMB - mov));
-                    u2 = IntT(val_[i + tmp_obj.len_ - 2] << mov) |
-                         (val_[i + tmp_obj.len_ - 3] >> (LIMB - mov));
+                    u1 = (u1 << mov) | (val_[i + pos - 1] >> (LIMB - mov));
+                    u2 = IntT(val_[i + pos - 1] << mov) |
+                         (val_[i + pos - 2] >> (LIMB - mov));
                 } else {
-                    u2 = val_[i + tmp_obj.len_ - 2];
+                    u2 = val_[i + pos - 1];
                 }
                 q = u1 / v1;
                 if (q >= b) q = b - 1;
@@ -192,8 +192,7 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
                 }
                 result.val_[i] = q;
 
-                u1 = (uint64_t(val_[i + tmp_obj.len_ - 1]) << LIMB) |
-                     val_[i + tmp_obj.len_ - 2];
+                u1 = (uint64_t(val_[i + pos]) << LIMB) | val_[i + pos - 1];
             }
             if (mod) *mod = *this;
             if (sign != rhs.Sign())
@@ -202,7 +201,9 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
                 *this = result;
         }
     } else {
-        IntT test_tmp = rhs.val_[rhs.len_ - 1];
+        size_t pos = rhs.len_ - 1;
+        while (!rhs.val_[pos]) --pos;
+        IntT test_tmp = rhs.val_[pos];
         while (test_tmp < (IntT(1) << (LIMB - 1))) {
             test_tmp <<= 1;
             ++mov;
@@ -223,24 +224,24 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
             }
         } else {
             BigInt<IntT> result;
-            result.SetLen(len_ - rhs.len_ + 2, false);
+            result.SetLen(len_ - pos + 1, false);
             if (mov) {
-                v1 = IntT(rhs.val_[rhs.len_ - 1] << mov) |
-                     (rhs.val_[rhs.len_ - 2] >> (LIMB - mov));
-                v2 = IntT(rhs.val_[rhs.len_ - 2] << mov) |
-                     (rhs.val_[rhs.len_ - 3] >> (LIMB - mov));
+                v1 = IntT(rhs.val_[pos] << mov) |
+                     (rhs.val_[pos - 1] >> (LIMB - mov));
+                v2 = IntT(rhs.val_[pos - 1] << mov) |
+                     (rhs.val_[pos - 2] >> (LIMB - mov));
             } else {
-                v1 = rhs.val_[rhs.len_ - 1];
-                v2 = rhs.val_[rhs.len_ - 2];
+                v1 = rhs.val_[pos];
+                v2 = rhs.val_[pos - 1];
             }
             u1 = val_[len_ - 1];
-            for (size_t i = len_ - rhs.len_; i != size_t(-1); --i) {
+            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
                 if (mov) {
-                    u1 = (u1 << mov) | (val_[i + rhs.len_ - 2] >> (LIMB - mov));
-                    u2 = IntT(val_[i + rhs.len_ - 2] << mov) |
-                         (val_[i + rhs.len_ - 3] >> (LIMB - mov));
+                    u1 = (u1 << mov) | (val_[i + pos - 1] >> (LIMB - mov));
+                    u2 = IntT(val_[i + pos - 1] << mov) |
+                         (val_[i + pos - 2] >> (LIMB - mov));
                 } else {
-                    u2 = val_[i + rhs.len_ - 2];
+                    u2 = val_[i + pos - 1];
                 }
                 q = u1 / v1;
                 if (q >= b) q = b - 1;
@@ -256,8 +257,7 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
                 }
                 result.val_[i] = q;
 
-                u1 = (uint64_t(val_[i + rhs.len_ - 1]) << LIMB) |
-                     val_[i + rhs.len_ - 2];
+                u1 = (uint64_t(val_[i + pos]) << LIMB) | val_[i + pos - 1];
             }
             if (mod) *mod = *this;
             if (sign != rhs.Sign())
@@ -277,7 +277,6 @@ BigInt<uint32_t>& BigInt<uint32_t>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
-	// FIXME(weiz): check if there are pure sign limbs (zero)
     if (rhs == BigInt<IntT>(0)) return *this;
     if constexpr (LIMB > 21) return DivEqAlgA(rhs, mod);
     bool sign = Sign();
@@ -301,12 +300,13 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
                 BasicDivEq(tmp_obj.val_[0], nullptr);
             }
         } else {
+            size_t pos = tmp_obj.len_ - 1;
+            while (!tmp_obj.val_[pos]) --pos;
             BigInt<IntT> result;
-            result.SetLen(len_ - tmp_obj.len_ + 2, false);
-            v = (uint64_t(tmp_obj.val_[tmp_obj.len_ - 1]) << LIMB) |
-                tmp_obj.val_[tmp_obj.len_ - 2];
+            result.SetLen(len_ - pos + 1, false);
+            v = (uint64_t(tmp_obj.val_[pos]) << LIMB) | tmp_obj.val_[pos - 1];
             u = (uint64_t(val_[len_ - 1]) << LIMB) | val_[len_ - 2];
-            for (size_t i = len_ - tmp_obj.len_; i != size_t(-1); --i) {
+            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
                 q = u / v;
                 if (q >= b) q = b - 1;
                 *this -= (tmp_obj * IntT(q)) << (i * LIMB);
@@ -315,9 +315,8 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
                     *this += tmp_obj << (i * LIMB);
                 }
                 result.val_[i] = q;
-                u = (uint64_t(val_[i + tmp_obj.len_ - 1]) << (2 * LIMB)) |
-                    (uint64_t(val_[i + tmp_obj.len_ - 2]) << LIMB) |
-                    val_[i + tmp_obj.len_ - 3];
+                u = (uint64_t(val_[i + pos]) << (2 * LIMB)) |
+                    (uint64_t(val_[i + pos - 1]) << LIMB) | val_[i + pos - 2];
             }
             if (mod) *mod = *this;
             if (sign != rhs.Sign())
@@ -341,12 +340,13 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
                 BasicDivEq(rhs.val_[0], nullptr);
             }
         } else {
+            size_t pos = rhs.len_ - 1;
+            while (!rhs.val_[pos]) --pos;
             BigInt<IntT> result;
-            result.SetLen(len_ - rhs.len_ + 2, false);
-            v = (uint64_t(rhs.val_[rhs.len_ - 1]) << LIMB) |
-                rhs.val_[rhs.len_ - 2];
+            result.SetLen(len_ - pos + 1, false);
+            v = (uint64_t(rhs.val_[pos]) << LIMB) | rhs.val_[pos - 1];
             u = (uint64_t(val_[len_ - 1]) << LIMB) | val_[len_ - 2];
-            for (size_t i = len_ - rhs.len_; i != size_t(-1); --i) {
+            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
                 q = u / v;
                 if (q >= b) q = b - 1;
                 *this -= (rhs * IntT(q)) << (i * LIMB);
@@ -355,9 +355,8 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
                     *this += rhs << (i * LIMB);
                 }
                 result.val_[i] = q;
-                u = (uint64_t(val_[i + rhs.len_ - 1]) << (2 * LIMB)) |
-                    (uint64_t(val_[i + rhs.len_ - 2]) << LIMB) |
-                    val_[i + rhs.len_ - 3];
+                u = (uint64_t(val_[i + pos]) << (2 * LIMB)) |
+                    (uint64_t(val_[i + pos - 1]) << LIMB) | val_[i + pos - 2];
             }
             if (mod) *mod = *this;
             if (sign != rhs.Sign())

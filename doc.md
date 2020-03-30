@@ -136,11 +136,13 @@ while (len_ > 1 && some_condition()) --len_;
 
 依赖`SetLen(size_t, bool)`。 生成随机数。`length`指明随机数占用的段数。`fixed`指明最高段的占用位数。
 
-若`fixed == 0`，则最高段占用任意位，但保证非负。 此时的随机数范围是`[0, 2^{LIMB * length - 1})`
+若`fixed == 0`，则最高段占用任意位，但保证非负。 此时的随机数范围是`[0, 2^{LIMB * length})`
 
-其他情况下，若`fixed % LIMB == 0`，则最高段保证最高位一定为1，这意味着生成的是负数。 此时的随机数范围是`[-2^{LIMB * length - 1}, 0)`
+其他情况下，若`fixed % LIMB == 0`，则最高段保证最高位一定为1，但会额外加符号段保证非负。
 
 其他情况下，取`fixed %= LIMB`，最高段保证从低往高第`fixed`位为1，更高位均为0。 此时的随机数范围是`[2^{LIMB * (length - 1) + fixed}, 2^{LIMB * (length-1) + fixed + 1})`
+
+注意其中存在额外添加符号段的情况。
 
 #### `const IntT* Data() const;`
 

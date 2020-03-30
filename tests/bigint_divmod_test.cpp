@@ -32,11 +32,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     calc::BigInt<> b(2);
     do_test(a.GenRandom(7), b.GenRandom(3));
     std::cout << std::endl;
-    do_test(a.GenRandom(7, 16), b.GenRandom(3));
+    do_test(a.GenRandom(7).ToOpposite(), b.GenRandom(3));
     std::cout << std::endl;
-    do_test(a.GenRandom(7), b.GenRandom(3, 16));
+    do_test(a.GenRandom(7), b.GenRandom(3).ToOpposite());
     std::cout << std::endl;
-    do_test(a.GenRandom(7, 16), b.GenRandom(3, 16));
+    do_test(a.GenRandom(7).ToOpposite(), b.GenRandom(3).ToOpposite());
     std::cout << std::endl;
     do_more_test(a.GenRandom(3), b.GenRandom(2));
     std::cout << std::endl;

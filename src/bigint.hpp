@@ -45,6 +45,8 @@ class BigInt {
 
     // basic operations
     bool Sign() const;
+    bool Parity() const;
+    size_t TrailingZero() const;
     // shrink the size allocated to *a power of 2*
     // @return: capacity after shrink
     size_t Shrink();
@@ -52,9 +54,6 @@ class BigInt {
     BigInt& CutLen(size_t seg_len, size_t bit_len = 0);
     BigInt& CutBit(size_t bitlen);
     // assign non-negative random value
-    // @param: length=0 means length=this->len_
-    // @param: Unless 0, ensure the bitlen of the highest segment is fixed%LIMB
-    //         so fixed==LIMB will always generate a negative value
     BigInt& GenRandom(size_t length = 0, size_t fixed = 0);
     const IntT* Data() const;
     size_t Length() const;

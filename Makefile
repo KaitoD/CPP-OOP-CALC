@@ -81,7 +81,7 @@ all: $(TARGETS)
 
 compile/bigint.o: src/bigint.cpp src/bigint.hpp src/bigint_bit_arith.cpp \
 	src/bigint_io.cpp src/bigint_addsub.cpp src/bigint_mul.cpp \
-	src/bigint_divmod.cpp
+	src/bigint_divmod.cpp src/bigint_ext.cpp
 	$(CXX) $(CXXFLAGS) -c src/bigint.cpp -o compile/bigint.o
 
 bigint_basic_test: compile/bigint_basic_test.o compile/bigint.o

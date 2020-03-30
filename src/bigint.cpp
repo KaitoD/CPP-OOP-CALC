@@ -3,6 +3,7 @@
 #include "bigint_addsub.cpp"
 #include "bigint_bit_arith.cpp"
 #include "bigint_divmod.cpp"
+#include "bigint_ext.cpp"
 #include "bigint_io.cpp"
 #include "bigint_mul.cpp"
 // If there are other cpp files, include them here,
@@ -107,6 +108,25 @@ bool BigInt<IntT>::Sign() const {
     return val_[len_ - 1] >> (LIMB - 1);
 }
 template <typename IntT>
+bool BigInt<IntT>::Parity() const {
+    return val_[0] & 1;
+}
+template <typename IntT>
+size_t BigInt<IntT>::TrailingZero() const {
+    size_t i = 0, j = 0;
+    while (i < len_ && val_[i] == 0) ++i;
+    if (i == len_) {
+        return 0;  // is zero
+    } else {
+        IntT t = val_[i];
+        while ((t & 1) == 0) {
+            ++j;
+            t >>= 1;
+        }
+    }
+    return i * LIMB + j;
+}
+template <typename IntT>
 size_t BigInt<IntT>::Shrink() {
     ShrinkLen();
     size_t target = len_ << 1;
@@ -143,18 +163,18 @@ BigInt<IntT>& BigInt<IntT>::GenRandom(size_t length, size_t fixed) {
     if (length == 0) length = len_;
     SetLen(length, false);
     for (size_t i = 0; i < len_; ++i) val_[i] = rand_(rand_gen_);
-    if (fixed == 0) {
-        val_[len_ - 1] &= IntT(-1) >> 1;
-    } else {
+    if (fixed != 0) {
         fixed %= LIMB;
         if (fixed == 0) {
-            // always negative
             val_[len_ - 1] |= IntT(1) << (LIMB - 1);
+            SetLen(len_ + 1, false);
         } else {
             val_[len_ - 1] <<= (LIMB - fixed);
             val_[len_ - 1] >>= (LIMB - fixed);
             val_[len_ - 1] |= IntT(1) << (fixed - 1);
         }
+    } else if (Sign()) {
+        SetLen(len_ + 1, false);
     }
     return *this;
 }

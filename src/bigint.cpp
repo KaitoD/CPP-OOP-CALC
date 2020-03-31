@@ -22,11 +22,22 @@ BigInt<IntT>::BigInt(int value)
         do {
             val_[len_++] = IntT(value);
             value >>= LIMB;
-        } while (value != 0);
+        } while (value != 0 && value != -1);
         if (len_ < cap_) std::fill(val_ + len_, val_ + cap_, IntT(0));
         if (len_ == 0) len_ = 1;
         ShrinkLen();
     }
+}
+template <typename IntT>
+BigInt<IntT>::BigInt(uint64_t value)
+    : cap_(64 / LIMB + 1), len_(0), val_(new IntT[cap_]) {
+    do {
+        val_[len_++] = IntT(value);
+        value >>= LIMB;
+    } while (value != 0);
+    std::fill(val_ + len_, val_ + cap_, IntT(0));
+    if (Sign()) ++len_;
+    ShrinkLen();
 }
 // copy constructor
 template <typename IntT>
@@ -100,6 +111,14 @@ BigInt<IntT>::operator bool() const {
     for (size_t i = 0; i < len_; ++i)
         if (val_[i]) return true;
     return false;
+}
+template <typename IntT>
+BigInt<IntT>::operator uint64_t() const {
+    constexpr size_t seg = 64 / LIMB;
+    uint8_t i = len_ < seg ? len_ : seg;
+    uint64_t rv = 0;
+    while (i > 0) rv = (rv << LIMB) | val_[--i];
+    return rv;
 }
 
 // basic operations
@@ -407,7 +426,7 @@ template class BigInt<uint8_t>;
 template class BigInt<uint16_t>;
 template class BigInt<uint32_t>;
 
-// explicit instanizaiton of operators
+// explicit instanizaiton of functions
 template BigInt<uint8_t> operator&(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> operator|(BigInt<uint8_t> lhs,
@@ -432,6 +451,18 @@ template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
 template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
 template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
+template BigInt<uint8_t> BigProduct(uint64_t a, uint64_t b);
+template BigInt<uint8_t> Factorial(uint64_t n);
+template BigInt<uint8_t> Power(const BigInt<uint8_t>& a, uint64_t p);
+template BigInt<uint8_t> PowMod(const BigInt<uint8_t>& a, uint64_t p,
+                                const BigInt<uint8_t>& n);
+template BigInt<uint8_t> PowMod(const BigInt<uint8_t>& a,
+                                const BigInt<uint8_t>& p,
+                                const BigInt<uint8_t>& n);
+template BigInt<uint8_t> GcdBin(BigInt<uint8_t> a, BigInt<uint8_t> b);
+template BigInt<uint8_t> ExtGcdBin(BigInt<uint8_t> a, BigInt<uint8_t> b,
+                                   BigInt<uint8_t>* x, BigInt<uint8_t>* y);
+
 template BigInt<uint16_t> operator&(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> operator|(BigInt<uint16_t> lhs,
@@ -456,6 +487,18 @@ template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
 template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
 template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
+template BigInt<uint16_t> BigProduct(uint64_t a, uint64_t b);
+template BigInt<uint16_t> Factorial(uint64_t n);
+template BigInt<uint16_t> Power(const BigInt<uint16_t>& a, uint64_t p);
+template BigInt<uint16_t> PowMod(const BigInt<uint16_t>& a, uint64_t p,
+                                 const BigInt<uint16_t>& n);
+template BigInt<uint16_t> PowMod(const BigInt<uint16_t>& a,
+                                 const BigInt<uint16_t>& p,
+                                 const BigInt<uint16_t>& n);
+template BigInt<uint16_t> GcdBin(BigInt<uint16_t> a, BigInt<uint16_t> b);
+template BigInt<uint16_t> ExtGcdBin(BigInt<uint16_t> a, BigInt<uint16_t> b,
+                                    BigInt<uint16_t>* x, BigInt<uint16_t>* y);
+
 template BigInt<uint32_t> operator&(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> operator|(BigInt<uint32_t> lhs,
@@ -480,6 +523,17 @@ template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
 template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
 template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
+template BigInt<uint32_t> BigProduct(uint64_t a, uint64_t b);
+template BigInt<uint32_t> Factorial(uint64_t n);
+template BigInt<uint32_t> Power(const BigInt<uint32_t>& a, uint64_t p);
+template BigInt<uint32_t> PowMod(const BigInt<uint32_t>& a, uint64_t p,
+                                 const BigInt<uint32_t>& n);
+template BigInt<uint32_t> PowMod(const BigInt<uint32_t>& a,
+                                 const BigInt<uint32_t>& p,
+                                 const BigInt<uint32_t>& n);
+template BigInt<uint32_t> GcdBin(BigInt<uint32_t> a, BigInt<uint32_t> b);
+template BigInt<uint32_t> ExtGcdBin(BigInt<uint32_t> a, BigInt<uint32_t> b,
+                                    BigInt<uint32_t>* x, BigInt<uint32_t>* y);
 #ifndef __cpp_impl_three_way_comparison
 template bool operator<(const BigInt<uint8_t>& lhs, const BigInt<uint8_t>& rhs);
 template bool operator>(const BigInt<uint8_t>& lhs, const BigInt<uint8_t>& rhs);

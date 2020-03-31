@@ -55,9 +55,10 @@ endif
 # set targets here
 RELEASE_TARGETS=
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
-			  bigint_mul_test bigint_divmod_test
+			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test
 BENCHMARK_TARGETS=bigint_bit_arith_benchmark bigint_simple_arith_benchmark \
-				  bigint_mul_benchmark bigint_divmod_benchmark
+				  bigint_mul_benchmark bigint_divmod_benchmark \
+				  bigint_ext_arith_benchmark
 
 
 ifeq ($(MODE),debug)
@@ -142,6 +143,19 @@ bigint_divmod_benchmark: compile/bigint_divmod_benchmark.o compile/bigint.o
 compile/bigint_divmod_benchmark.o: src/bigint.hpp tests/bigint_divmod_benchmark.cpp
 	$(CXX) $(CXXFLAGS) -c tests/bigint_divmod_benchmark.cpp \
 		-o compile/bigint_divmod_benchmark.o
+
+bigint_ext_arith_test: compile/bigint_ext_arith_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_ext_arith_test.o compile/bigint.o \
+		-o bigint_ext_arith_test
+compile/bigint_ext_arith_test.o: src/bigint.hpp tests/bigint_ext_arith_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_ext_arith_test.cpp \
+		-o compile/bigint_ext_arith_test.o
+bigint_ext_arith_benchmark: compile/bigint_ext_arith_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_ext_arith_benchmark.o compile/bigint.o \
+		-o bigint_ext_arith_benchmark
+compile/bigint_ext_arith_benchmark.o: src/bigint.hpp tests/bigint_ext_arith_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_ext_arith_benchmark.cpp \
+		-o compile/bigint_ext_arith_benchmark.o
 
 .PHONY: all clean clean-all
 clean:

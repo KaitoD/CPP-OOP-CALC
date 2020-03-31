@@ -25,7 +25,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
                 rand_dur.count() / 1e3);
     std::printf("Note: limb no longer than %hu\n", mask);
     tot_len = 0;
-    // test_count = 16;
+	test_count = 16;
     a.Shrink();
     b.Shrink();
     start_time = std::chrono::high_resolution_clock::now();
@@ -45,7 +45,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << (res & calc::BigInt<>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
     tot_len = 0;
-    // test_count = 64;
+	test_count = 64;
     a.Shrink();
     b.Shrink();
     start_time = std::chrono::high_resolution_clock::now();
@@ -58,6 +58,26 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     end_time = std::chrono::high_resolution_clock::now();
     duration = (end_time - start_time) - rand_dur * tot_len;
     std::printf("Tested FFT multiplication");
+    std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    std::printf("Execution time per limb*operation is %.3lfus.\n",
+                duration.count() / 1e3 / tot_len);
+    std::cout << (res & calc::BigInt<>(0xff))
+              << "(prevent optimizing out the whole loop)" << std::endl;
+    tot_len = 0;
+	test_count = 64;
+    a.Shrink();
+    b.Shrink();
+    start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_count; ++i) {
+        a.GenRandom(ran(ran_eng) & mask);
+        b.GenRandom(ran(ran_eng) & mask);
+        res ^= a * b;
+        tot_len += std::max(a.Length(), b.Length());
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = (end_time - start_time) - rand_dur * tot_len;
+    std::printf("Tested auto distribute multiplication");
     std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",

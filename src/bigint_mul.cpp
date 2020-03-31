@@ -32,39 +32,71 @@ BigInt<IntT>& BigInt<IntT>::operator*=(IntT rhs) {
             val_[len_ - 1] = static_cast<IntT>(t);
         }
     }
+    if (Sign()) SetLen(len_ + 1, false);
 
     if (sign) ToOpposite();
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator*=(const BigInt& rhs) {
-    if (len_ < 8 || rhs.len_ < 8)
+    if (len_ < 4 || rhs.len_ < 4) {
         return PlainMulEq(rhs);
-    else
-        return FFTMulEq(rhs);
+    } else if (len_ <= rhs.len_) {
+        if (rhs.len_ / 2 < len_) return FFTMulEq(rhs);
+        if (rhs.Sign()) {
+            *this *= -rhs;
+            ToOpposite();
+        } else {
+            size_t t = rhs.len_ / 2;
+            BigInt<IntT> x(rhs.val_, t), y(rhs.val_ + t, rhs.len_ - t);
+            x.SetLen(x.len_ + 1, false);
+            x.ShrinkLen();
+            y.ShrinkLen();
+            y *= *this;
+            *this *= x;
+            *this += (y << (t * LIMB));
+        }
+    } else {
+        if (len_ / 2 < rhs.len_) return FFTMulEq(rhs);
+        bool sign = Sign();
+        if (sign) ToOpposite();
+        size_t t = len_ / 2;
+        BigInt<IntT> x(val_, t), y(val_ + t, len_ - t);
+        x.SetLen(x.len_ + 1, false);
+        x.ShrinkLen();
+        y.ShrinkLen();
+        x *= rhs;
+        y *= rhs;
+        *this = (y << (t * LIMB)) + x;
+        if (sign) ToOpposite();
+    }
+    return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::PlainMulEq(const BigInt& rhs) {
+    if (rhs.Sign()) {
+        PlainMulEq(-rhs);
+        ToOpposite();
+        return *this;
+    }
     BigInt<IntT> result;
-    result.AutoExpandSize(len_ + rhs.len_);
+    result.SetLen(len_ + rhs.len_ + 1, true);
     bool sign = Sign() ^ rhs.Sign();
     if (Sign()) ToOpposite();
-    if (rhs.Sign()) {
-        BigInt<IntT> tmp_obj = -rhs;
-        for (size_t i = 0; i < tmp_obj.len_; ++i)
-            result += ((*this) * tmp_obj.val_[i]) << (LIMB * i);
-    } else {
-        for (size_t i = 0; i < rhs.len_; ++i)
-            result += ((*this) * rhs.val_[i]) << (LIMB * i);
-    }
-    if (sign)
-        *this = -result;
-    else
-        *this = result;
+    for (size_t i = 0; i < rhs.len_; ++i)
+        result += ((*this) * rhs.val_[i]) << (LIMB * i);
+    *this = result;
+    if (sign) ToOpposite();
+    ShrinkLen();
     return *this;
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::FFTMulEq(const BigInt& rhs) {
+    if (rhs.Sign()) {
+        FFTMulEq(-rhs);
+        ToOpposite();
+        return *this;
+    }
     using T = std::complex<double>;
     T* v[2];
     size_t n = 1, i = 0;
@@ -75,12 +107,7 @@ BigInt<IntT>& BigInt<IntT>::FFTMulEq(const BigInt& rhs) {
     v[1] = new T[n];
     for (; i < len_; ++i) v[0][i] = val_[i];
     for (; i < n; ++i) v[0][i] = 0;
-    if (rhs.Sign()) {
-        BigInt<IntT> tmp_obj = -rhs;
-        for (i = 0; i < tmp_obj.len_; ++i) v[1][i] = tmp_obj.val_[i];
-    } else {
-        for (i = 0; i < rhs.len_; ++i) v[1][i] = rhs.val_[i];
-    }
+    for (i = 0; i < rhs.len_; ++i) v[1][i] = rhs.val_[i];
     for (; i < n; ++i) v[1][i] = 0;
     FFT(v[0], n, false);
     FFT(v[1], n, false);

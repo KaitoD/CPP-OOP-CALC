@@ -90,22 +90,9 @@ BigInt<IntT>& BigInt<IntT>::operator++() {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::operator--() {
-    auto sign = Sign();
-    auto min_limb = IntT(0);
-    for (size_t i = len_ - 1; i != size_t(-1); --i) {
-        if (val_[i] == min_limb) {
-            val_[i] = IntT(-1);
-        } else {
-            --val_[i];
-            break;
-        }
-    }
-    if (!Sign() && sign) {
-        SetLen(len_ + 1, false);
-        val_[len_ - 1] = IntT(-1);
-    } else {
-        ShrinkLen();
-    }
+    ToBitInv();
+    ++*this;
+    ToBitInv();
     return *this;
 }
 template <typename IntT>

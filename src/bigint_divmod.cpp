@@ -122,6 +122,7 @@ BigInt<IntT>& BigInt<IntT>::PlainDivEq(const BigInt& rhs, BigInt* mod) {
         }
         std::fill(mod->val_ + i, mod->val_ + mod->len_, IntT(0));
         mod->len_ = i ? i : 1;
+        if (mod->Sign()) mod->SetLen(mod->len_ + 1, false);
         if (sign) mod->ToOpposite();
     }
     return *this;
@@ -129,145 +130,85 @@ BigInt<IntT>& BigInt<IntT>::PlainDivEq(const BigInt& rhs, BigInt* mod) {
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
     if (rhs == BigInt<IntT>(0)) return *this;
+    if (rhs.Sign()) {
+        DivEqAlgA(-rhs, mod);
+        ToOpposite();
+        return *this;
+    }
     bool sign = Sign();
     if (sign) ToOpposite();
     size_t mov = 0;
     uint64_t q, r, u1, u2, v1, v2;
     constexpr uint64_t b = (1l << LIMB);
-    if (rhs.Sign()) {
-        BigInt<IntT> tmp_obj = -rhs;
-        size_t pos = tmp_obj.len_ - 1;
-        while (!tmp_obj.val_[pos]) --pos;
-        IntT test_tmp = tmp_obj.val_[pos];
-        while (test_tmp < (IntT(1) << (LIMB - 1))) {
-            test_tmp <<= 1;
-            ++mov;
-        }
-        if (*this < tmp_obj) {
-            if (mod) *mod = *this;
-            std::fill(val_, val_ + len_, IntT(0));
-            len_ = 1;
-        } else if (tmp_obj.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
-            PlainDivEq(tmp_obj, mod);
-        } else if (tmp_obj.len_ == 1) {
-            // ensure non-negative
-            if (mod) {
-                BasicDivEq(tmp_obj.val_[0], mod->val_);
-                mod->SetLen(1, false);
-            } else {
-                BasicDivEq(tmp_obj.val_[0], nullptr);
-            }
+    size_t pos = rhs.len_ - 1;
+    while (!rhs.val_[pos]) --pos;
+    IntT test_tmp = rhs.val_[pos];
+    while (test_tmp < (IntT(1) << (LIMB - 1))) {
+        test_tmp <<= 1;
+        ++mov;
+    }
+    if (*this < rhs) {
+        if (mod) *mod = *this;
+        std::fill(val_, val_ + len_, IntT(0));
+        len_ = 1;
+    } else if (rhs.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
+        PlainDivEq(rhs, mod);
+    } else if (rhs.len_ == 1) {
+        // ensure non-negative
+        if (mod) {
+            BasicDivEq(rhs.val_[0], mod->val_);
+            mod->SetLen(1, false);
         } else {
-            BigInt<IntT> result;
-            result.SetLen(len_ - pos + 1, false);
-            if (mov) {
-                v1 = IntT(tmp_obj.val_[pos] << mov) |
-                     (tmp_obj.val_[pos - 1] >> (LIMB - mov));
-                v2 = IntT(tmp_obj.val_[pos - 1] << mov) |
-                     (tmp_obj.val_[pos - 2] >> (LIMB - mov));
-            } else {
-                v1 = tmp_obj.val_[pos];
-                v2 = tmp_obj.val_[pos - 1];
-            }
-            u1 = val_[len_ - 1];
-            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
-                if (mov) {
-                    u1 = (u1 << mov) | (val_[i + pos - 1] >> (LIMB - mov));
-                    u2 = IntT(val_[i + pos - 1] << mov) |
-                         (val_[i + pos - 2] >> (LIMB - mov));
-                } else {
-                    u2 = val_[i + pos - 1];
-                }
-                q = u1 / v1;
-                if (q >= b) q = b - 1;
-                r = u1 - q * v1;
-                if (q * v2 > b * r + u2) {
-                    --q;
-                    r += v1;
-                }
-                *this -= (tmp_obj * IntT(q)) << (i * LIMB);
-                if (Sign()) {
-                    --q;
-                    *this += tmp_obj << (i * LIMB);
-                }
-                result.val_[i] = q;
-
-                u1 = (uint64_t(val_[i + pos]) << LIMB) | val_[i + pos - 1];
-            }
-            if (mod) *mod = *this;
-            if (sign != rhs.Sign())
-                *this = -result;
-            else
-                *this = result;
+            BasicDivEq(rhs.val_[0], nullptr);
         }
     } else {
-        size_t pos = rhs.len_ - 1;
-        while (!rhs.val_[pos]) --pos;
-        IntT test_tmp = rhs.val_[pos];
-        while (test_tmp < (IntT(1) << (LIMB - 1))) {
-            test_tmp <<= 1;
-            ++mov;
-        }
-        if (*this < rhs) {
-            if (mod) *mod = *this;
-            std::fill(val_, val_ + len_, IntT(0));
-            len_ = 1;
-        } else if (rhs.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
-            PlainDivEq(rhs, mod);
-        } else if (rhs.len_ == 1) {
-            // ensure non-negative
-            if (mod) {
-                BasicDivEq(rhs.val_[0], mod->val_);
-                mod->SetLen(1, false);
-            } else {
-                BasicDivEq(rhs.val_[0], nullptr);
-            }
+        BigInt<IntT> result;
+        result.SetLen(len_ - pos + 1, true);
+        if (mov) {
+            v1 = IntT(rhs.val_[pos] << mov) |
+                 (rhs.val_[pos - 1] >> (LIMB - mov));
+            v2 = IntT(rhs.val_[pos - 1] << mov) |
+                 (rhs.val_[pos - 2] >> (LIMB - mov));
         } else {
-            BigInt<IntT> result;
-            result.SetLen(len_ - pos + 1, false);
-            if (mov) {
-                v1 = IntT(rhs.val_[pos] << mov) |
-                     (rhs.val_[pos - 1] >> (LIMB - mov));
-                v2 = IntT(rhs.val_[pos - 1] << mov) |
-                     (rhs.val_[pos - 2] >> (LIMB - mov));
-            } else {
-                v1 = rhs.val_[pos];
-                v2 = rhs.val_[pos - 1];
-            }
-            u1 = val_[len_ - 1];
-            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
-                if (mov) {
-                    u1 = (u1 << mov) | (val_[i + pos - 1] >> (LIMB - mov));
-                    u2 = IntT(val_[i + pos - 1] << mov) |
-                         (val_[i + pos - 2] >> (LIMB - mov));
-                } else {
-                    u2 = val_[i + pos - 1];
-                }
-                q = u1 / v1;
-                if (q >= b) q = b - 1;
-                r = u1 - q * v1;
-                if (q * v2 > b * r + u2) {
-                    --q;
-                    r += v1;
-                }
-                *this -= (rhs * IntT(q)) << (i * LIMB);
-                if (Sign()) {
-                    --q;
-                    *this += rhs << (i * LIMB);
-                }
-                result.val_[i] = q;
-
-                u1 = (uint64_t(val_[i + pos]) << LIMB) | val_[i + pos - 1];
-            }
-            if (mod) *mod = *this;
-            if (sign != rhs.Sign())
-                *this = -result;
-            else
-                *this = result;
+            v1 = rhs.val_[pos];
+            v2 = rhs.val_[pos - 1];
         }
+        u1 = val_[len_ - 1];
+        for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
+            if (mov) {
+                u1 = (u1 << mov) | (val_[i + pos - 1] >> (LIMB - mov));
+                u2 = IntT(val_[i + pos - 1] << mov) |
+                     (val_[i + pos - 2] >> (LIMB - mov));
+            } else {
+                u2 = val_[i + pos - 1];
+            }
+            q = u1 / v1;
+            if (q >= b) q = b - 1;
+            r = u1 - q * v1;
+            if (q * v2 > b * r + u2) {
+                --q;
+                r += v1;
+            }
+            *this -= (rhs * IntT(q)) << (i * LIMB);
+            if (Sign()) {
+                --q;
+                *this += rhs << (i * LIMB);
+            }
+            // std::cout << "rhs: " << (rhs << (i * LIMB)) << std::endl;
+            // std::cout << "q: " << q << std::endl;
+            // std::cout << "remain: " << *this << std::endl;
+            result.val_[i] = q;
+
+            u1 = (uint64_t(val_[i + pos]) << LIMB) | val_[i + pos - 1];
+        }
+        if (mod) *mod = std::move(*this);
+        *this = std::move(result);
+        if (sign) ToOpposite();
     }
-    if (mod && sign) mod->ToOpposite();
-    if (mod) mod->ShrinkLen();
+    if (mod) {
+        if (sign) mod->ToOpposite();
+        mod->ShrinkLen();
+    }
     ShrinkLen();
     return *this;
 }
@@ -277,96 +218,58 @@ BigInt<uint32_t>& BigInt<uint32_t>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
 }
 template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
-    if (rhs == BigInt<IntT>(0)) return *this;
     if constexpr (LIMB > 21) return DivEqAlgA(rhs, mod);
+    if (rhs == BigInt<IntT>(0)) return *this;
+    if (rhs.Sign()) {
+        DivEqAlgB(-rhs, mod);
+        ToOpposite();
+        return *this;
+    }
     bool sign = Sign();
     if (sign) ToOpposite();
     uint64_t q, u, v;
     constexpr uint64_t b = (1l << LIMB);
-    if (rhs.Sign()) {
-        BigInt<IntT> tmp_obj = -rhs;
-        if (*this < tmp_obj) {
-            if (mod) *mod = *this;
-            std::fill(val_, val_ + len_, IntT(0));
-            len_ = 1;
-        } else if (tmp_obj.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
-            PlainDivEq(tmp_obj, mod);
-        } else if (tmp_obj.len_ == 1) {
-            // ensure non-negative
-            if (mod) {
-                BasicDivEq(tmp_obj.val_[0], mod->val_);
-                mod->SetLen(1, false);
-            } else {
-                BasicDivEq(tmp_obj.val_[0], nullptr);
-            }
+    if (*this < rhs) {
+        if (mod) *mod = *this;
+        std::fill(val_, val_ + len_, IntT(0));
+        len_ = 1;
+    } else if (rhs.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
+        PlainDivEq(rhs, mod);
+    } else if (rhs.len_ == 1) {
+        // ensure non-negative
+        if (mod) {
+            BasicDivEq(rhs.val_[0], mod->val_);
+            mod->SetLen(1, false);
         } else {
-            size_t pos = tmp_obj.len_ - 1;
-            while (!tmp_obj.val_[pos]) --pos;
-            BigInt<IntT> result;
-            result.SetLen(len_ - pos + 1, false);
-            v = (uint64_t(tmp_obj.val_[pos]) << LIMB) | tmp_obj.val_[pos - 1];
-            u = (uint64_t(val_[len_ - 1]) << LIMB) | val_[len_ - 2];
-            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
-                q = u / v;
-                if (q >= b) q = b - 1;
-                *this -= (tmp_obj * IntT(q)) << (i * LIMB);
-                if (Sign()) {
-                    --q;
-                    *this += tmp_obj << (i * LIMB);
-                }
-                result.val_[i] = q;
-                u = (uint64_t(val_[i + pos]) << (2 * LIMB)) |
-                    (uint64_t(val_[i + pos - 1]) << LIMB) | val_[i + pos - 2];
-            }
-            if (mod) *mod = *this;
-            if (sign != rhs.Sign())
-                *this = -result;
-            else
-                *this = result;
+            BasicDivEq(rhs.val_[0], nullptr);
         }
     } else {
-        if (*this < rhs) {
-            if (mod) *mod = *this;
-            std::fill(val_, val_ + len_, IntT(0));
-            len_ = 1;
-        } else if (rhs.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
-            PlainDivEq(rhs, mod);
-        } else if (rhs.len_ == 1) {
-            // ensure non-negative
-            if (mod) {
-                BasicDivEq(rhs.val_[0], mod->val_);
-                mod->SetLen(1, false);
-            } else {
-                BasicDivEq(rhs.val_[0], nullptr);
+        size_t pos = rhs.len_ - 1;
+        while (!rhs.val_[pos]) --pos;
+        BigInt<IntT> result;
+        result.SetLen(len_ - pos + 1, false);
+        v = (uint64_t(rhs.val_[pos]) << LIMB) | rhs.val_[pos - 1];
+        u = (uint64_t(val_[len_ - 1]) << LIMB) | val_[len_ - 2];
+        for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
+            q = u / v;
+            if (q >= b) q = b - 1;
+            *this -= (rhs * IntT(q)) << (i * LIMB);
+            if (Sign()) {
+                --q;
+                *this += rhs << (i * LIMB);
             }
-        } else {
-            size_t pos = rhs.len_ - 1;
-            while (!rhs.val_[pos]) --pos;
-            BigInt<IntT> result;
-            result.SetLen(len_ - pos + 1, false);
-            v = (uint64_t(rhs.val_[pos]) << LIMB) | rhs.val_[pos - 1];
-            u = (uint64_t(val_[len_ - 1]) << LIMB) | val_[len_ - 2];
-            for (size_t i = len_ - pos - 1; i != size_t(-1); --i) {
-                q = u / v;
-                if (q >= b) q = b - 1;
-                *this -= (rhs * IntT(q)) << (i * LIMB);
-                if (Sign()) {
-                    --q;
-                    *this += rhs << (i * LIMB);
-                }
-                result.val_[i] = q;
-                u = (uint64_t(val_[i + pos]) << (2 * LIMB)) |
-                    (uint64_t(val_[i + pos - 1]) << LIMB) | val_[i + pos - 2];
-            }
-            if (mod) *mod = *this;
-            if (sign != rhs.Sign())
-                *this = -result;
-            else
-                *this = result;
+            result.val_[i] = q;
+            u = (uint64_t(val_[i + pos]) << (2 * LIMB)) |
+                (uint64_t(val_[i + pos - 1]) << LIMB) | val_[i + pos - 2];
         }
+        if (mod) *mod = std::move(*this);
+        *this = std::move(result);
+        if (sign) ToOpposite();
     }
-    if (mod && sign) mod->ToOpposite();
-    if (mod) mod->ShrinkLen();
+    if (mod) {
+        if (sign) mod->ToOpposite();
+        mod->ShrinkLen();
+    }
     ShrinkLen();
     return *this;
 }

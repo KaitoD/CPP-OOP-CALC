@@ -120,6 +120,11 @@ BigInt<IntT>::operator std::string() const {
 template <typename IntT>
 std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
                                    int showbase) const {
+    bool sign = is_signed_ && Sign();
+    if (sign) {
+        BigInt<IntT> tmp_obj = -*this;
+        return "-" + tmp_obj.ToString(base, uppercase, showbase);
+    }
     const BigInt<IntT> zero(0);
     if (*this == zero) return std::string(1, '0');
     if (base < 2 || base > 36) base = 10;
@@ -137,8 +142,6 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
     }
     std::string str;
     str.reserve(LIMB * len_ / log_base + 5);
-    bool sign = is_signed_ && Sign();
-    if (sign) str.append(1, '-');
     if (showbase == 1) {
         switch (base) {
             case 2:
@@ -161,131 +164,66 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
                 break;
         }
     }
-    if (sign) {
-        BigInt<IntT> tmp_obj = -*this;
-        if (tmp_base == 1 && LIMB % log_base == 0) {
-            offset = LIMB - log_base;
-            mask = mask_init;
-            while (mask && !(mask & tmp_obj.val_[tmp_obj.len_ - 1])) {
+    if (tmp_base == 1 && LIMB % log_base == 0) {
+        offset = LIMB - log_base;
+        mask = mask_init;
+        while (mask && !(mask & val_[len_ - 1])) {
+            mask >>= log_base;
+            offset -= log_base;
+        }
+        for (i = len_ - 1; i != size_t(-1); --i) {
+            while (mask) {
+                str.append(1, charset[(mask & val_[i]) >> offset]);
                 mask >>= log_base;
                 offset -= log_base;
             }
-            for (i = tmp_obj.len_ - 1; i != size_t(-1); --i) {
-                while (mask) {
-                    str.append(1, charset[(mask & tmp_obj.val_[i]) >> offset]);
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                offset = LIMB - log_base;
-                mask = mask_init;
-            }
-        } else if (tmp_base == 1) {
-            size_t move_len = log_base - LIMB % log_base;
-            size_t cur_move = tmp_obj.len_ * LIMB % log_base;
-            IntT mask_val = IntT((IntT(1) << log_base) - 1);
-            offset = LIMB - cur_move;
-            if (cur_move && (tmp_obj.val_[tmp_obj.len_ - 1] >> offset)) {
-                str.append(1,
-                           charset[tmp_obj.val_[tmp_obj.len_ - 1] >> offset]);
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-            } else {
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-                while (mask && !(mask & tmp_obj.val_[tmp_obj.len_ - 1])) {
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-            }
-            for (i = tmp_obj.len_ - 1; i != size_t(-1); --i) {
-                while (mask >= mask_val) {
-                    str.append(1, charset[(mask & tmp_obj.val_[i]) >> offset]);
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                cur_move = (cur_move + move_len) % log_base;
-                offset = LIMB - cur_move;
-                if (cur_move) {
-                    str.append(1,
-                               charset[(tmp_obj.val_[i - 1] >> offset) |
-                                       ((tmp_obj.val_[i] & mask) << cur_move)]);
-                }
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-            }
-        } else {
-            std::string rev_str;
-            IntT mod;
-            rev_str.reserve(LIMB * tmp_obj.len_ / log_base);
-            while (tmp_obj != zero) {
-                tmp_obj.BasicDivEq(static_cast<IntT>(base), &mod);
-                rev_str.append(1, charset[mod]);
-            }
-            for (i = rev_str.length() - 1; i != size_t(-1); --i)
-                str.append(1, rev_str[i]);
-        }
-    } else {
-        if (tmp_base == 1 && LIMB % log_base == 0) {
             offset = LIMB - log_base;
             mask = mask_init;
+        }
+    } else if (tmp_base == 1) {
+        size_t move_len = log_base - LIMB % log_base;
+        size_t cur_move = len_ * LIMB % log_base;
+        IntT mask_val = IntT((IntT(1) << log_base) - 1);
+        offset = LIMB - cur_move;
+        if (cur_move && (val_[len_ - 1] >> offset)) {
+            str.append(1, charset[val_[len_ - 1] >> offset]);
+            offset = LIMB - log_base - cur_move;
+            mask = mask_init >> cur_move;
+        } else {
+            offset = LIMB - log_base - cur_move;
+            mask = mask_init >> cur_move;
             while (mask && !(mask & val_[len_ - 1])) {
                 mask >>= log_base;
                 offset -= log_base;
             }
-            for (i = len_ - 1; i != size_t(-1); --i) {
-                while (mask) {
-                    str.append(1, charset[(mask & val_[i]) >> offset]);
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                offset = LIMB - log_base;
-                mask = mask_init;
-            }
-        } else if (tmp_base == 1) {
-            size_t move_len = log_base - LIMB % log_base;
-            size_t cur_move = len_ * LIMB % log_base;
-            IntT mask_val = IntT((IntT(1) << log_base) - 1);
-            offset = LIMB - cur_move;
-            if (cur_move && (val_[len_ - 1] >> offset)) {
-                str.append(1, charset[val_[len_ - 1] >> offset]);
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-            } else {
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-                while (mask && !(mask & val_[len_ - 1])) {
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-            }
-            for (i = len_ - 1; i != size_t(-1); --i) {
-                while (mask >= mask_val) {
-                    str.append(1, charset[(mask & val_[i]) >> offset]);
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                cur_move = (cur_move + move_len) % log_base;
-                offset = LIMB - cur_move;
-                if (cur_move) {
-                    str.append(1, charset[(val_[i - 1] >> offset) |
-                                          ((val_[i] & mask) << cur_move)]);
-                }
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-            }
-        } else {
-            std::string rev_str;
-            IntT mod;
-            rev_str.reserve(LIMB * len_ / log_base);
-            BigInt<IntT> tmp_obj = *this;
-            if (tmp_obj.Sign()) tmp_obj.SetLen(tmp_obj.len_ + 1, false);
-            while (tmp_obj != zero) {
-                tmp_obj.BasicDivEq(static_cast<IntT>(base), &mod);
-                rev_str.append(1, charset[mod]);
-            }
-            for (i = rev_str.length() - 1; i != size_t(-1); --i)
-                str.append(1, rev_str[i]);
         }
+        for (i = len_ - 1; i != size_t(-1); --i) {
+            while (mask >= mask_val) {
+                str.append(1, charset[(mask & val_[i]) >> offset]);
+                mask >>= log_base;
+                offset -= log_base;
+            }
+            cur_move = (cur_move + move_len) % log_base;
+            offset = LIMB - cur_move;
+            if (cur_move) {
+                str.append(1, charset[(val_[i - 1] >> offset) |
+                                      ((val_[i] & mask) << cur_move)]);
+            }
+            offset = LIMB - log_base - cur_move;
+            mask = mask_init >> cur_move;
+        }
+    } else {
+        std::string rev_str;
+        IntT mod;
+        rev_str.reserve(LIMB * len_ / log_base);
+        BigInt<IntT> tmp_obj = *this;
+        if (tmp_obj.Sign()) tmp_obj.SetLen(tmp_obj.len_ + 1, false);
+        while (tmp_obj != zero) {
+            tmp_obj.BasicDivEq(static_cast<IntT>(base), &mod);
+            rev_str.append(1, charset[mod]);
+        }
+        for (i = rev_str.length() - 1; i != size_t(-1); --i)
+            str.append(1, rev_str[i]);
     }
     if (suffix_base && base != 10) {
         str.append(1, '_');
@@ -299,6 +237,13 @@ std::string BigInt<IntT>::ToString(size_t base, bool uppercase,
 template <typename IntT>
 void BigInt<IntT>::Print(size_t base, bool uppercase, int showbase,
                          std::FILE* f) const {
+    bool sign = is_signed_ && Sign();
+    if (sign) {
+        BigInt<IntT> tmp_obj = -*this;
+        std::fputc('-', f);
+        tmp_obj.Print(base, uppercase, showbase, f);
+        return;
+    }
     if (*this == BigInt<IntT>(0)) {
         std::fprintf(f, "0");
         return;
@@ -317,8 +262,6 @@ void BigInt<IntT>::Print(size_t base, bool uppercase, int showbase,
         ++log_base;
         tmp_base >>= 1;
     }
-    bool sign = is_signed_ && Sign();
-    if (sign && tmp_base == 1) std::fputc('-', f);
     if (showbase == 1) {
         switch (base) {
             case 2:
@@ -342,121 +285,59 @@ void BigInt<IntT>::Print(size_t base, bool uppercase, int showbase,
         }
     }
     if (tmp_base == 1 && LIMB % log_base == 0) {
-        if (sign) {
-            BigInt<IntT> tmp_obj = -*this;
-            offset = LIMB - log_base;
-            mask = mask_init;
-            while (mask && !(mask & tmp_obj.val_[tmp_obj.len_ - 1])) {
+        offset = LIMB - log_base;
+        mask = mask_init;
+        while (mask && !(mask & val_[len_ - 1])) {
+            mask >>= log_base;
+            offset -= log_base;
+        }
+        for (i = len_ - 1; i != size_t(-1); --i) {
+            for (j = 0; mask; ++j) {
+                limb_str[j] = charset[(mask & val_[i]) >> offset];
                 mask >>= log_base;
                 offset -= log_base;
             }
-            for (i = tmp_obj.len_ - 1; i != size_t(-1); --i) {
-                for (j = 0; mask; ++j) {
-                    limb_str[j] = charset[(mask & tmp_obj.val_[i]) >> offset];
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                std::fwrite(limb_str, 1, j, f);
-                offset = LIMB - log_base;
-                mask = mask_init;
-            }
-        } else {
+            std::fwrite(limb_str, 1, j, f);
             offset = LIMB - log_base;
             mask = mask_init;
+        }
+    } else if (tmp_base == 1) {
+        size_t move_len = log_base - LIMB % log_base;
+        size_t cur_move = len_ * LIMB % log_base;
+        IntT mask_val = IntT((IntT(1) << log_base) - 1);
+        offset = LIMB - cur_move;
+        if (cur_move && (val_[len_ - 1] >> offset)) {
+            limb_str[0] = charset[val_[len_ - 1] >> offset];
+            offset = LIMB - log_base - cur_move;
+            mask = mask_init >> cur_move;
+            j = 1;
+        } else {
+            offset = LIMB - log_base - cur_move;
+            mask = mask_init >> cur_move;
             while (mask && !(mask & val_[len_ - 1])) {
                 mask >>= log_base;
                 offset -= log_base;
             }
-            for (i = len_ - 1; i != size_t(-1); --i) {
-                for (j = 0; mask; ++j) {
-                    limb_str[j] = charset[(mask & val_[i]) >> offset];
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                std::fwrite(limb_str, 1, j, f);
-                offset = LIMB - log_base;
-                mask = mask_init;
-            }
+            j = 0;
         }
-    } else if (tmp_base == 1) {
-        if (sign) {
-            BigInt<IntT> tmp_obj = -*this;
-            size_t move_len = log_base - LIMB % log_base;
-            size_t cur_move = tmp_obj.len_ * LIMB % log_base;
-            IntT mask_val = IntT((IntT(1) << log_base) - 1);
+        for (i = len_ - 1; i != size_t(-1); --i) {
+            for (; mask >= mask_val; ++j) {
+                limb_str[j] = charset[(mask & val_[i]) >> offset];
+                mask >>= log_base;
+                offset -= log_base;
+            }
+            std::fwrite(limb_str, 1, j, f);
+            cur_move = (cur_move + move_len) % log_base;
             offset = LIMB - cur_move;
-            if (cur_move && (tmp_obj.val_[tmp_obj.len_ - 1] >> offset)) {
-                limb_str[0] = charset[tmp_obj.val_[tmp_obj.len_ - 1] >> offset];
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
+            if (cur_move) {
+                limb_str[0] = charset[(val_[i - 1] >> offset) |
+                                      ((val_[i] & mask) << cur_move)];
                 j = 1;
             } else {
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-                while (mask && !(mask & tmp_obj.val_[tmp_obj.len_ - 1])) {
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
                 j = 0;
             }
-            for (i = tmp_obj.len_ - 1; i != size_t(-1); --i) {
-                for (; mask >= mask_val; ++j) {
-                    limb_str[j] = charset[(mask & tmp_obj.val_[i]) >> offset];
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                std::fwrite(limb_str, 1, j, f);
-                cur_move = (cur_move + move_len) % log_base;
-                offset = LIMB - cur_move;
-                if (cur_move) {
-                    limb_str[0] =
-                        charset[(tmp_obj.val_[i - 1] >> offset) |
-                                ((tmp_obj.val_[i] & mask) << cur_move)];
-                    j = 1;
-                } else {
-                    j = 0;
-                }
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-            }
-        } else {
-            size_t move_len = log_base - LIMB % log_base;
-            size_t cur_move = len_ * LIMB % log_base;
-            IntT mask_val = IntT((IntT(1) << log_base) - 1);
-            offset = LIMB - cur_move;
-            if (cur_move && (val_[len_ - 1] >> offset)) {
-                limb_str[0] = charset[val_[len_ - 1] >> offset];
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-                j = 1;
-            } else {
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-                while (mask && !(mask & val_[len_ - 1])) {
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                j = 0;
-            }
-            for (i = len_ - 1; i != size_t(-1); --i) {
-                for (; mask >= mask_val; ++j) {
-                    limb_str[j] = charset[(mask & val_[i]) >> offset];
-                    mask >>= log_base;
-                    offset -= log_base;
-                }
-                std::fwrite(limb_str, 1, j, f);
-                cur_move = (cur_move + move_len) % log_base;
-                offset = LIMB - cur_move;
-                if (cur_move) {
-                    limb_str[0] = charset[(val_[i - 1] >> offset) |
-                                          ((val_[i] & mask) << cur_move)];
-                    j = 1;
-                } else {
-                    j = 0;
-                }
-                offset = LIMB - log_base - cur_move;
-                mask = mask_init >> cur_move;
-            }
+            offset = LIMB - log_base - cur_move;
+            mask = mask_init >> cur_move;
         }
     } else {
         std::string str = ToString(base, uppercase, 0);
@@ -481,6 +362,12 @@ std::istream& operator>>(std::istream& in, BigInt<IntT>& rhs) {
 }
 template <typename IntT>
 std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
+    bool sign = rhs.is_signed_ && rhs.Sign();
+    if (sign) {
+        out.put('-');
+        BigInt<IntT> tmp_obj = -rhs;
+        return out << tmp_obj;
+    }
     if (rhs == BigInt<IntT>(0)) {
         out.write("0", 1);
         return out;
@@ -490,143 +377,69 @@ std::ostream& operator<<(std::ostream& out, const BigInt<IntT>& rhs) {
     IntT mask = IntT(1);
     char limb_str[(sizeof(IntT) << 3) + 1];
     size_t i = 0, j = 0, offset;
-    bool sign = rhs.is_signed_ && rhs.Sign();
     if (out.flags() & out.hex) {
-        if (sign) {
-            out.put('-');
-            BigInt<IntT> tmp_rhs = -rhs;
-            IntT mask_init = IntT(IntT(15) << (tmp_rhs.LIMB - 4));
-            if (out.flags() & out.showbase) {
-                if (out.flags() & out.uppercase)
-                    out.write("0X", 2);
-                else
-                    out.write("0x", 2);
-            }
-            offset = tmp_rhs.LIMB - 4;
-            mask = mask_init;
-            while (mask && !(mask & tmp_rhs.val_[tmp_rhs.len_ - 1])) {
+        IntT mask_init = IntT(IntT(15) << (rhs.LIMB - 4));
+        if (out.flags() & out.showbase) {
+            if (out.flags() & out.uppercase)
+                out.write("0X", 2);
+            else
+                out.write("0x", 2);
+        }
+        offset = rhs.LIMB - 4;
+        mask = mask_init;
+        while (mask && !(mask & rhs.val_[rhs.len_ - 1])) {
+            mask >>= 4;
+            offset -= 4;
+        }
+        for (i = rhs.len_ - 1; i != size_t(-1); --i) {
+            for (j = 0; mask; ++j) {
+                limb_str[j] = charset[(mask & rhs.val_[i]) >> offset];
                 mask >>= 4;
                 offset -= 4;
             }
-            for (i = tmp_rhs.len_ - 1; i != size_t(-1); --i) {
-                for (j = 0; mask; ++j) {
-                    limb_str[j] = charset[(mask & tmp_rhs.val_[i]) >> offset];
-                    mask >>= 4;
-                    offset -= 4;
-                }
-                out.write(limb_str, static_cast<std::streamsize>(j));
-                offset = tmp_rhs.LIMB - 4;
-                mask = mask_init;
-            }
-        } else {
-            IntT mask_init = IntT(IntT(15) << (rhs.LIMB - 4));
-            if (out.flags() & out.showbase) {
-                if (out.flags() & out.uppercase)
-                    out.write("0X", 2);
-                else
-                    out.write("0x", 2);
-            }
+            out.write(limb_str, static_cast<std::streamsize>(j));
             offset = rhs.LIMB - 4;
             mask = mask_init;
-            while (mask && !(mask & rhs.val_[rhs.len_ - 1])) {
-                mask >>= 4;
-                offset -= 4;
-            }
-            for (i = rhs.len_ - 1; i != size_t(-1); --i) {
-                for (j = 0; mask; ++j) {
-                    limb_str[j] = charset[(mask & rhs.val_[i]) >> offset];
-                    mask >>= 4;
-                    offset -= 4;
-                }
-                out.write(limb_str, static_cast<std::streamsize>(j));
-                offset = rhs.LIMB - 4;
-                mask = mask_init;
-            }
         }
     } else if (out.flags() & out.oct) {
-        if (sign) {
-            out.put('-');
-            BigInt<IntT> tmp_rhs = -rhs;
-            IntT mask_init = IntT(IntT(7) << (tmp_rhs.LIMB - 3));
-            if (out.flags() & out.showbase) out.write("0", 1);
-            size_t move_len = 3 - tmp_rhs.LIMB % 3;
-            size_t cur_move = tmp_rhs.len_ * tmp_rhs.LIMB % 3;
-            IntT mask_val = IntT((IntT(1) << 3) - 1);
-            offset = tmp_rhs.LIMB - cur_move;
-            if (cur_move && (tmp_rhs.val_[tmp_rhs.len_ - 1] >> offset)) {
-                limb_str[0] = charset[tmp_rhs.val_[tmp_rhs.len_ - 1] >> offset];
-                offset = tmp_rhs.LIMB - 3 - cur_move;
-                mask = mask_init >> cur_move;
-                j = 1;
-            } else {
-                offset = tmp_rhs.LIMB - 3 - cur_move;
-                mask = mask_init >> cur_move;
-                while (mask && !(mask & tmp_rhs.val_[tmp_rhs.len_ - 1])) {
-                    mask >>= 3;
-                    offset -= 3;
-                }
-                j = 0;
-            }
-            for (i = tmp_rhs.len_ - 1; i != size_t(-1); --i) {
-                for (; mask >= mask_val; ++j) {
-                    limb_str[j] = charset[(mask & tmp_rhs.val_[i]) >> offset];
-                    mask >>= 3;
-                    offset -= 3;
-                }
-                out.write(limb_str, static_cast<std::streamsize>(j));
-                cur_move = (cur_move + move_len) % 3;
-                offset = tmp_rhs.LIMB - cur_move;
-                if (cur_move) {
-                    limb_str[0] =
-                        charset[(tmp_rhs.val_[i - 1] >> offset) |
-                                ((tmp_rhs.val_[i] & mask) << cur_move)];
-                    j = 1;
-                } else {
-                    j = 0;
-                }
-                offset = tmp_rhs.LIMB - 3 - cur_move;
-                mask = mask_init >> cur_move;
-            }
+        IntT mask_init = IntT(IntT(7) << (rhs.LIMB - 3));
+        if (out.flags() & out.showbase) out.write("0", 1);
+        size_t move_len = 3 - rhs.LIMB % 3;
+        size_t cur_move = rhs.len_ * rhs.LIMB % 3;
+        IntT mask_val = IntT((IntT(1) << 3) - 1);
+        offset = rhs.LIMB - cur_move;
+        if (cur_move && (rhs.val_[rhs.len_ - 1] >> offset)) {
+            limb_str[0] = charset[rhs.val_[rhs.len_ - 1] >> offset];
+            offset = rhs.LIMB - 3 - cur_move;
+            mask = mask_init >> cur_move;
+            j = 1;
         } else {
-            IntT mask_init = IntT(IntT(7) << (rhs.LIMB - 3));
-            if (out.flags() & out.showbase) out.write("0", 1);
-            size_t move_len = 3 - rhs.LIMB % 3;
-            size_t cur_move = rhs.len_ * rhs.LIMB % 3;
-            IntT mask_val = IntT((IntT(1) << 3) - 1);
+            offset = rhs.LIMB - 3 - cur_move;
+            mask = mask_init >> cur_move;
+            while (mask && !(mask & rhs.val_[rhs.len_ - 1])) {
+                mask >>= 3;
+                offset -= 3;
+            }
+            j = 0;
+        }
+        for (i = rhs.len_ - 1; i != size_t(-1); --i) {
+            for (; mask >= mask_val; ++j) {
+                limb_str[j] = charset[(mask & rhs.val_[i]) >> offset];
+                mask >>= 3;
+                offset -= 3;
+            }
+            out.write(limb_str, static_cast<std::streamsize>(j));
+            cur_move = (cur_move + move_len) % 3;
             offset = rhs.LIMB - cur_move;
-            if (cur_move && (rhs.val_[rhs.len_ - 1] >> offset)) {
-                limb_str[0] = charset[rhs.val_[rhs.len_ - 1] >> offset];
-                offset = rhs.LIMB - 3 - cur_move;
-                mask = mask_init >> cur_move;
+            if (cur_move) {
+                limb_str[0] = charset[(rhs.val_[i - 1] >> offset) |
+                                      ((rhs.val_[i] & mask) << cur_move)];
                 j = 1;
             } else {
-                offset = rhs.LIMB - 3 - cur_move;
-                mask = mask_init >> cur_move;
-                while (mask && !(mask & rhs.val_[rhs.len_ - 1])) {
-                    mask >>= 3;
-                    offset -= 3;
-                }
                 j = 0;
             }
-            for (i = rhs.len_ - 1; i != size_t(-1); --i) {
-                for (; mask >= mask_val; ++j) {
-                    limb_str[j] = charset[(mask & rhs.val_[i]) >> offset];
-                    mask >>= 3;
-                    offset -= 3;
-                }
-                out.write(limb_str, static_cast<std::streamsize>(j));
-                cur_move = (cur_move + move_len) % 3;
-                offset = rhs.LIMB - cur_move;
-                if (cur_move) {
-                    limb_str[0] = charset[(rhs.val_[i - 1] >> offset) |
-                                          ((rhs.val_[i] & mask) << cur_move)];
-                    j = 1;
-                } else {
-                    j = 0;
-                }
-                offset = rhs.LIMB - 3 - cur_move;
-                mask = mask_init >> cur_move;
-            }
+            offset = rhs.LIMB - 3 - cur_move;
+            mask = mask_init >> cur_move;
         }
     } else {
         std::string str = rhs.ToString(10, false, 0);

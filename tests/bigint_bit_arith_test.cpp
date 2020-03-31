@@ -46,9 +46,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << std::endl;
     do_test(a.GenRandom(3).ToOpposite(), b.GenRandom(7).ToOpposite());
     std::cout << std::endl;
-    std::cout << "----UNSIGNED----" << std::endl;
-    a.is_signed_ = false;
-    b.is_signed_ = false;
-    do_test(a.GenRandom(3), b.GenRandom(7).ToOpposite());
+    // std::cout << "----UNSIGNED----" << std::endl;
+    // a.is_signed_ = false;
+    // b.is_signed_ = false;
+    // do_test(a.GenRandom(3), b.GenRandom(7).ToOpposite());
     return 0;
 }

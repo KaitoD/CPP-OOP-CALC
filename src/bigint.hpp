@@ -102,6 +102,7 @@ class BigInt {
     BigInt& PlainDivEq(const BigInt& rhs, BigInt* mod = nullptr);
     BigInt& DivEqAlgA(const BigInt& rhs, BigInt* mod = nullptr);
     BigInt& DivEqAlgB(const BigInt& rhs, BigInt* mod = nullptr);
+    BigInt& DivEqRecursive(const BigInt& rhs, BigInt* mod = nullptr);
 
     // non-modifying
     static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
@@ -111,6 +112,8 @@ class BigInt {
                            BigInt* mod = nullptr);
     static BigInt DivAlgA(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
     static BigInt DivAlgB(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
+    static BigInt DivRecursive(BigInt lhs, const BigInt& rhs,
+                               BigInt* mod = nullptr);
 
     // I/O
     // currently accept 2<=base<=36, other value will be 10

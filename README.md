@@ -10,5 +10,6 @@ Decimal output may be reliable (be careful though).
 - 2020/3/27 FFT multiplication, with test and benchmark.
 - 2020/3/28 Division and (the corresponding) modulus, with test and benchmark.
 - 2020/3/31 Extended arithmetic including gcd, primality test. Fixed some bugs.
+Add a divide-and-conquer division algorithm.
 
 [doc.md]: doc.md

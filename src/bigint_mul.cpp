@@ -54,7 +54,7 @@ BigInt<IntT>& BigInt<IntT>::operator*=(const BigInt& rhs) {
             y.ShrinkLen();
             y *= *this;
             *this *= x;
-            *this += (y << (t * LIMB));
+            *this += (std::move(y) << (t * LIMB));
         }
     } else {
         if (len_ / 2 < rhs.len_) return FFTMulEq(rhs);
@@ -67,7 +67,8 @@ BigInt<IntT>& BigInt<IntT>::operator*=(const BigInt& rhs) {
         y.ShrinkLen();
         x *= rhs;
         y *= rhs;
-        *this = (y << (t * LIMB)) + x;
+        *this = std::move(x);
+        *this += (std::move(y) << (t * LIMB));
         if (sign) ToOpposite();
     }
     return *this;

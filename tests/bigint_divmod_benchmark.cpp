@@ -74,5 +74,77 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
                 duration.count() / 1e3 / tot_len);
     std::cout << (res & calc::BigInt<>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
+    // test_count = 64;
+    a.Shrink();
+    b.Shrink();
+    start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_count; ++i) {
+        a.GenRandom(ran(ran_eng) & mask);
+        b.GenRandom(ran(ran_eng) & mask);
+        if (a.Length() > b.Length()) {
+            res ^= a.DivRecursive(a, b);
+            tot_len += a.Length();
+        } else {
+            res ^= a.DivRecursive(b, a);
+            tot_len += b.Length();
+        }
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = (end_time - start_time) - rand_dur * tot_len;
+    std::printf("Tested divide-and-conquer division");
+    std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    std::printf("Execution time per limb*operation is %.3lfus.\n",
+                duration.count() / 1e3 / tot_len);
+    std::cout << (res & calc::BigInt<>(0xff))
+              << "(prevent optimizing out the whole loop)" << std::endl;
+    // test_count = 64;
+    a.Shrink();
+    b.Shrink();
+    start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_count; ++i) {
+        a.GenRandom(ran(ran_eng) & mask);
+        b.GenRandom(ran(ran_eng) & mask);
+        if (a.Length() > b.Length()) {
+            res ^= a / b;
+            tot_len += a.Length();
+        } else {
+            res ^= b / a;
+            tot_len += b.Length();
+        }
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = (end_time - start_time) - rand_dur * tot_len;
+    std::printf("Tested auto distribute division");
+    std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    std::printf("Execution time per limb*operation is %.3lfus.\n",
+                duration.count() / 1e3 / tot_len);
+    std::cout << (res & calc::BigInt<>(0xff))
+              << "(prevent optimizing out the whole loop)" << std::endl;
+    // test_count = 64;
+    a.Shrink();
+    b.Shrink();
+    start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_count; ++i) {
+        a.GenRandom(ran(ran_eng) & mask);
+        b.GenRandom(ran(ran_eng) & mask);
+        if (a.Length() > b.Length()) {
+            res ^= a % b;
+            tot_len += a.Length();
+        } else {
+            res ^= b % a;
+            tot_len += b.Length();
+        }
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = (end_time - start_time) - rand_dur * tot_len;
+    std::printf("A test of modulus");
+    std::printf(" on %d samples. Total length is %lu.\n", test_count, tot_len);
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    std::printf("Execution time per limb*operation is %.3lfus.\n",
+                duration.count() / 1e3 / tot_len);
+    std::cout << (res & calc::BigInt<>(0xff))
+              << "(prevent optimizing out the whole loop)" << std::endl;
     return 0;
 }

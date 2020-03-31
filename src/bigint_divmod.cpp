@@ -35,11 +35,14 @@ BigInt<IntT>& BigInt<IntT>::operator/=(const BigInt& rhs) {
         PlainDivEq(rhs, nullptr);
     } else if (rhs.len_ == 1) {
         BasicDivEq(rhs.val_[0], nullptr);
-    } else {
+    } else if (len_ <= rhs.len_ || len_ / rhs.len_ > 8 ||
+               len_ / (len_ - rhs.len_) > 8) {
         if constexpr (LIMB > 21)
             DivEqAlgA(rhs, nullptr);
         else
             DivEqAlgB(rhs, nullptr);
+    } else {
+        DivEqRecursive(rhs, nullptr);
     }
     return *this;
 }
@@ -48,11 +51,14 @@ BigInt<IntT>& BigInt<IntT>::operator%=(const BigInt& rhs) {
     BigInt<IntT> mod;
     if (len_ <= 64 / LIMB && rhs.len_ <= 64 / LIMB) {
         PlainDivEq(rhs, &mod);
-    } else {
+    } else if (len_ <= rhs.len_ || len_ / rhs.len_ > 8 ||
+               len_ / (len_ - rhs.len_) > 8) {
         if constexpr (LIMB > 21)
             DivEqAlgA(rhs, &mod);
         else
             DivEqAlgB(rhs, &mod);
+    } else {
+        DivEqRecursive(rhs, &mod);
     }
     *this = std::move(mod);
     return *this;
@@ -194,9 +200,6 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgA(const BigInt& rhs, BigInt* mod) {
                 --q;
                 *this += rhs << (i * LIMB);
             }
-            // std::cout << "rhs: " << (rhs << (i * LIMB)) << std::endl;
-            // std::cout << "q: " << q << std::endl;
-            // std::cout << "remain: " << *this << std::endl;
             result.val_[i] = q;
 
             u1 = (uint64_t(val_[i + pos]) << LIMB) | val_[i + pos - 1];
@@ -273,6 +276,81 @@ BigInt<IntT>& BigInt<IntT>::DivEqAlgB(const BigInt& rhs, BigInt* mod) {
     ShrinkLen();
     return *this;
 }
+template <typename IntT>
+BigInt<IntT>& BigInt<IntT>::DivEqRecursive(const BigInt& rhs, BigInt* mod) {
+    if (rhs == BigInt<IntT>(0)) return *this;
+    if (rhs.Sign()) {
+        DivEqRecursive(-rhs, mod);
+        ToOpposite();
+        return *this;
+    }
+    bool sign = Sign();
+    if (sign) ToOpposite();
+    if (*this < rhs) {
+        if (mod) *mod = *this;
+        std::fill(val_, val_ + len_, IntT(0));
+        len_ = 1;
+    } else if (rhs.len_ <= 64 / LIMB && len_ <= 64 / LIMB) {
+        PlainDivEq(rhs, mod);
+    } else if (rhs.len_ == 1) {
+        // ensure non-negative
+        if (mod) {
+            BasicDivEq(rhs.val_[0], mod->val_);
+            mod->SetLen(1, false);
+        } else {
+            BasicDivEq(rhs.val_[0], nullptr);
+        }
+    } else if (len_ <= rhs.len_ || len_ < 4 || rhs.len_ < 4 ||
+               len_ / rhs.len_ > 8 || len_ / (len_ - rhs.len_) > 8) {
+        DivEqAlgA(rhs, mod);
+    } else {
+        BigInt<IntT> result(0);
+        size_t new_base = (rhs.len_ + 1) / 2;
+        BigInt<IntT> b = BigInt<IntT>(1) << (new_base * LIMB);
+        --b;
+        BigInt<IntT> v(rhs.val_ + new_base, rhs.len_ - new_base);
+        size_t mov = new_base * LIMB - v.BitLen();
+        BigInt<IntT> new_rhs = rhs << mov;
+        v = BigInt<IntT>(new_rhs.val_ + new_base, new_rhs.len_ - new_base);
+        *this <<= mov;
+        size_t new_len = len_ / new_base;
+        size_t i = (new_len - 1) * new_base;
+        BigInt<IntT> tmp = new_rhs << (i * LIMB);
+        if (tmp <= *this) {
+            result += BigInt<IntT>(1) << (i * LIMB);
+            *this -= tmp;
+        }
+        BigInt<IntT> u(val_ + i, len_ - i);
+        do {
+            i -= new_base;
+            u /= v;
+            if (u > b) u = b;
+            *this -= (new_rhs * u) << (i * LIMB);
+            if (Sign()) {
+                --u;
+                *this += new_rhs << (i * LIMB);
+            }
+            if (Sign()) {
+                --u;
+                *this += new_rhs << (i * LIMB);
+            }
+            result += u << (i * LIMB);
+
+            u = BigInt<IntT>(val_ + i, new_base + new_base);
+            if (u.Sign()) u.SetLen(u.len_ + 1, false);
+        } while (i);
+        *this >>= mov;
+        if (mod) *mod = std::move(*this);
+        *this = std::move(result);
+        if (sign) ToOpposite();
+    }
+    if (mod) {
+        if (sign) mod->ToOpposite();
+        mod->ShrinkLen();
+    }
+    ShrinkLen();
+    return *this;
+}
 
 // non-modifying
 template <typename IntT>
@@ -291,6 +369,11 @@ BigInt<IntT> BigInt<IntT>::DivAlgA(BigInt lhs, const BigInt& rhs, BigInt* mod) {
 template <typename IntT>
 BigInt<IntT> BigInt<IntT>::DivAlgB(BigInt lhs, const BigInt& rhs, BigInt* mod) {
     return lhs.DivEqAlgB(rhs, mod);
+}
+template <typename IntT>
+BigInt<IntT> BigInt<IntT>::DivRecursive(BigInt lhs, const BigInt& rhs,
+                                        BigInt* mod) {
+    return lhs.DivEqRecursive(rhs, mod);
 }
 
 // non-modifying binary operators

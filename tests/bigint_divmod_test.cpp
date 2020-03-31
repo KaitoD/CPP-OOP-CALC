@@ -8,11 +8,15 @@ void do_test(calc::BigInt<>& a, calc::BigInt<>& b) {
     std::cout << " + " << c << std::endl;
     std::cout << a << " == " << b << " * " << a.DivAlgB(a, b, &c);
     std::cout << " + " << c << std::endl;
+    std::cout << a << " == " << b << " * " << a.DivRecursive(a, b, &c);
+    std::cout << " + " << c << std::endl;
 
     std::cout << std::dec;
     std::cout << a << " == " << b << " * " << a.DivAlgA(a, b, &c);
     std::cout << " + " << c << std::endl;
     std::cout << a << " == " << b << " * " << a.DivAlgB(a, b, &c);
+    std::cout << " + " << c << std::endl;
+    std::cout << a << " == " << b << " * " << a.DivRecursive(a, b, &c);
     std::cout << " + " << c << std::endl;
 }
 void do_more_test(calc::BigInt<>& a, calc::BigInt<>& b) {
@@ -30,7 +34,7 @@ void do_more_test(calc::BigInt<>& a, calc::BigInt<>& b) {
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     calc::BigInt<> a(1);
     calc::BigInt<> b(2);
-    do_test(a.GenRandom(7), b.GenRandom(3));
+    do_test(a.GenRandom(8), b.GenRandom(4));
     std::cout << std::endl;
     do_test(a.GenRandom(7).ToOpposite(), b.GenRandom(3));
     std::cout << std::endl;

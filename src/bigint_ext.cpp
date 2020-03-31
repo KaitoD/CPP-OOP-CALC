@@ -251,11 +251,11 @@ BigInt<IntT> ExtGcdBin(BigInt<IntT> a, BigInt<IntT> b, BigInt<IntT>* x,
             q >>= t1;
         } else {
             if (swapped) {
-                *x = q;
-                *y = p;
+                if (x) *x = q;
+                if (y) *y = p;
             } else {
-                *x = p;
-                *y = q;
+                if (x) *x = p;
+                if (y) *y = q;
             }
             return a <<= t0;
         }

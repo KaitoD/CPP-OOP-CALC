@@ -1,7 +1,8 @@
 #include <iostream>
+
 #include "../src/bigint.hpp"
 // test +, -, ++, --
-void do_test(calc::BigInt<>& a, calc::BigInt<>& b) {
+void do_test(calc::BigInt<uint32_t>& a, calc::BigInt<uint32_t>& b) {
     std::cout << std::hex << std::showbase;
     std::cout << a << " + " << b << " == " << (a + b) << std::endl;
     std::cout << a << " - " << b << " == " << (a - b) << std::endl;
@@ -25,7 +26,8 @@ void do_test(calc::BigInt<>& a, calc::BigInt<>& b) {
     std::cout << "-" << a << " == " << (-a) << std::endl;
 }
 
-void do_more_test(calc::BigInt<>& a, calc::BigInt<>& b, uint16_t c) {
+void do_more_test(calc::BigInt<uint32_t>& a, calc::BigInt<uint32_t>& b,
+                  uint32_t c) {
     std::cout << std::hex << std::showbase;
     std::cout << a << " * " << c << " == " << (a * c) << std::endl;
     std::cout << b << " * " << c << " == " << (b * c) << std::endl;
@@ -43,8 +45,8 @@ void do_more_test(calc::BigInt<>& a, calc::BigInt<>& b, uint16_t c) {
     std::cout << b << " % " << c << " == " << (b % c) << std::endl;
 }
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    calc::BigInt<> a(1);
-    calc::BigInt<> b(2);
+    calc::BigInt<uint32_t> a(1);
+    calc::BigInt<uint32_t> b(2);
     std::srand(unsigned(time(nullptr)));
     do_test(a.GenRandom(3), b.GenRandom(7));
     std::cout << std::endl;
@@ -54,6 +56,6 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << std::endl;
     do_test(a.GenRandom(3).ToOpposite(), b.GenRandom(7).ToOpposite());
     std::cout << std::endl;
-    do_more_test(a.GenRandom(3), b.GenRandom(7), uint16_t(std::rand()));
+    do_more_test(a.GenRandom(3), b.GenRandom(7), uint32_t(std::rand()));
     return 0;
 }

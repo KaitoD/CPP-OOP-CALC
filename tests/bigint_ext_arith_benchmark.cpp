@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+
 #include "../src/bigint.hpp"
 // test different multiplication
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
@@ -20,7 +21,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = end_time - start_time;
     // std::cout << "math.factorial(" << x1 << ") == " << c << std::endl;
-    std::printf("math.log10(math.factorial(%lu)) == %.3lf\n", x1, c.log10());
+    std::printf("math.log10(math.factorial(%llu)) == %.3lf\n", x1, c.log10());
     std::printf("Time to calculate the exact factorial: %.3lfms\n",
                 (end_time - start_time).count() / 1e6);
     tot_len = 0;

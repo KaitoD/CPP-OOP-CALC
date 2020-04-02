@@ -1,4 +1,5 @@
 #include <cmath>
+
 #include "bigint.hpp"
 namespace calc {
 // extended arithmetic

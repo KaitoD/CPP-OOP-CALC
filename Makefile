@@ -30,7 +30,8 @@ WARNINGFLAGS=-Wall -Weffc++ -pedantic \
 			 -Wtautological-compare \
 			 -Wno-unused-result \
 			 -Wno-aggregate-return \
-			 -Wno-conversion
+			 -Wno-conversion \
+			 -Wno-c++17-extensions
 INSTRUMENTFLAGS=-Og -g -fsanitize=address \
 				-fsanitize=leak -fsanitize=undefined \
 				-fsanitize-address-use-after-scope \
@@ -43,7 +44,8 @@ else
 CXXFLAGS=-std=c++17 -Wno-unused-command-line-argument
 WARNINGFLAGS=-Weverything -Wno-c++98-compat -Wno-missing-prototypes \
 			 -Wno-c++98-compat-pedantic -Wno-weak-template-vtables \
-			 -Wno-global-constructors -Wno-exit-time-destructors
+			 -Wno-global-constructors -Wno-exit-time-destructors \
+			 -Wno-c++17-extensions
 INSTRUMENTFLAGS=-O0 -g -fsanitize=undefined  \
 				-fsanitize=address
 
@@ -55,10 +57,11 @@ endif
 # set targets here
 RELEASE_TARGETS=
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
-			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test
+			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test \
+			  bigint_io_test
 BENCHMARK_TARGETS=bigint_bit_arith_benchmark bigint_simple_arith_benchmark \
 				  bigint_mul_benchmark bigint_divmod_benchmark \
-				  bigint_ext_arith_benchmark
+				  bigint_ext_arith_benchmark bigint_io_benchmark
 
 
 ifeq ($(MODE),debug)
@@ -156,6 +159,19 @@ bigint_ext_arith_benchmark: compile/bigint_ext_arith_benchmark.o compile/bigint.
 compile/bigint_ext_arith_benchmark.o: src/bigint.hpp tests/bigint_ext_arith_benchmark.cpp
 	$(CXX) $(CXXFLAGS) -c tests/bigint_ext_arith_benchmark.cpp \
 		-o compile/bigint_ext_arith_benchmark.o
+
+bigint_io_test: compile/bigint_io_test.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_io_test.o compile/bigint.o \
+		-o bigint_io_test
+compile/bigint_io_test.o: src/bigint.hpp tests/bigint_io_test.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_io_test.cpp \
+		-o compile/bigint_io_test.o
+bigint_io_benchmark: compile/bigint_io_benchmark.o compile/bigint.o
+	$(CXX) $(CXXFLAGS) compile/bigint_io_benchmark.o compile/bigint.o \
+		-o bigint_io_benchmark
+compile/bigint_io_benchmark.o: src/bigint.hpp tests/bigint_io_benchmark.cpp
+	$(CXX) $(CXXFLAGS) -c tests/bigint_io_benchmark.cpp \
+		-o compile/bigint_io_benchmark.o
 
 .PHONY: all clean clean-all
 clean:

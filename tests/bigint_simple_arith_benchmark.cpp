@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+
 #include "../src/bigint.hpp"
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     calc::BigInt<> a(1);
@@ -52,14 +53,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     tot_len = 0;
     a.Shrink();
     res.Shrink();
-    uint16_t c;
+    uint16_t c, tres = 1;
     start_time = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng));
         c = ran(ran_eng);
         res ^= a * c;
         res ^= a / c;
-        res ^= a % c;
+        tres ^= a % c;
         tot_len += a.Length();
     }
     end_time = std::chrono::high_resolution_clock::now();

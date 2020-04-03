@@ -521,7 +521,7 @@ template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs,
 template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs, uint8_t rhs);
 template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
-template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
+template uint8_t operator%(BigInt<uint8_t> lhs, uint8_t rhs);
 template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
                                    const BigInt<uint8_t>& rhs);
 template BigInt<uint8_t> BigProduct(uint64_t a, uint64_t b);
@@ -557,7 +557,7 @@ template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs,
 template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs, uint16_t rhs);
 template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
-template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
+template uint16_t operator%(BigInt<uint16_t> lhs, uint16_t rhs);
 template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
                                     const BigInt<uint16_t>& rhs);
 template BigInt<uint16_t> BigProduct(uint64_t a, uint64_t b);
@@ -593,7 +593,7 @@ template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs,
 template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs, uint32_t rhs);
 template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
-template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
+template uint32_t operator%(BigInt<uint32_t> lhs, uint32_t rhs);
 template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
                                     const BigInt<uint32_t>& rhs);
 template BigInt<uint32_t> BigProduct(uint64_t a, uint64_t b);

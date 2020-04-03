@@ -130,6 +130,7 @@ class BigInt {
     double log2() const;
     double log10() const;
     bool isProbablePrime() const;
+    BigInt& ToNextPrime();
 
    private:
     char __padding__[7] = "7";
@@ -184,6 +185,8 @@ class BigInt {
     template <typename _IntT>
     friend BigInt<_IntT> PowMod(const BigInt<_IntT>& a, uint64_t p,
                                 const BigInt<_IntT>& n);
+    template <typename _IntT>
+    friend _IntT operator%(BigInt<_IntT> lhs, _IntT rhs);
 };
 
 // specialization
@@ -240,7 +243,7 @@ BigInt<IntT> operator/(BigInt<IntT> lhs, IntT rhs);
 template <typename IntT>
 BigInt<IntT> operator/(BigInt<IntT> lhs, const BigInt<IntT>& rhs);
 template <typename IntT>
-BigInt<IntT> operator%(BigInt<IntT> lhs, IntT rhs);
+IntT operator%(BigInt<IntT> lhs, IntT rhs);
 template <typename IntT>
 BigInt<IntT> operator%(BigInt<IntT> lhs, const BigInt<IntT>& rhs);
 #ifndef __cpp_impl_three_way_comparison
@@ -286,7 +289,7 @@ extern template BigInt<uint8_t> operator*(BigInt<uint8_t> lhs,
 extern template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs, uint8_t rhs);
 extern template BigInt<uint8_t> operator/(BigInt<uint8_t> lhs,
                                           const BigInt<uint8_t>& rhs);
-extern template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs, uint8_t rhs);
+extern template uint8_t operator%(BigInt<uint8_t> lhs, uint8_t rhs);
 extern template BigInt<uint8_t> operator%(BigInt<uint8_t> lhs,
                                           const BigInt<uint8_t>& rhs);
 extern template BigInt<uint8_t> BigProduct(uint64_t a, uint64_t b);
@@ -324,7 +327,7 @@ extern template BigInt<uint16_t> operator*(BigInt<uint16_t> lhs,
 extern template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs, uint16_t rhs);
 extern template BigInt<uint16_t> operator/(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
-extern template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs, uint16_t rhs);
+extern template uint16_t operator%(BigInt<uint16_t> lhs, uint16_t rhs);
 extern template BigInt<uint16_t> operator%(BigInt<uint16_t> lhs,
                                            const BigInt<uint16_t>& rhs);
 extern template BigInt<uint16_t> BigProduct(uint64_t a, uint64_t b);
@@ -363,7 +366,7 @@ extern template BigInt<uint32_t> operator*(BigInt<uint32_t> lhs,
 extern template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs, uint32_t rhs);
 extern template BigInt<uint32_t> operator/(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
-extern template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs, uint32_t rhs);
+extern template uint32_t operator%(BigInt<uint32_t> lhs, uint32_t rhs);
 extern template BigInt<uint32_t> operator%(BigInt<uint32_t> lhs,
                                            const BigInt<uint32_t>& rhs);
 extern template BigInt<uint32_t> BigProduct(uint64_t a, uint64_t b);

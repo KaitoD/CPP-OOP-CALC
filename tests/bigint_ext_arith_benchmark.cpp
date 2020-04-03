@@ -59,5 +59,27 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
                 duration.count() / 1e3 / tot_len);
     std::cout << (c & calc::BigInt<>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
+
+    test_count = 0;
+    tot_len = 16;
+    start_time = std::chrono::high_resolution_clock::now();
+    std::cout << std::boolalpha;
+    a.GenRandom(tot_len);
+    std::cout << "Get a prime: " << a.ToNextPrime() << std::endl;
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = end_time - start_time;
+    ++test_count;
+    std::printf("Note: length is exactly %lu (%lu bits)\n", tot_len,
+                tot_len << 4);
+    std::printf("Tested prime generation.\n");
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    a = "9168350993493354289721280135289246231112934508397010171811856211345545"
+        "5459943863830106860112450170829939921606773965108357833963910419474674"
+        "92038417254967";
+    start_time = std::chrono::high_resolution_clock::now();
+    std::cout << a.isProbablePrime() << std::endl;
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = end_time - start_time;
+    std::printf("Time to verify a prime is %.3lfms.\n", duration.count() / 1e6);
     return 0;
 }

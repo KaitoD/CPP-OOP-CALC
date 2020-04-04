@@ -4,10 +4,11 @@
 #include "../src/bigint.hpp"
 // test different multiplication
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    calc::BigInt<uint32_t> a(1);
-    calc::BigInt<uint32_t> b(2);
-    calc::BigInt<uint32_t> x, y;
-    calc::BigInt<uint32_t> res;
+    using IntT = uint16_t;
+    calc::BigInt<IntT> a(1);
+    calc::BigInt<IntT> b(2);
+    calc::BigInt<IntT> x, y;
+    calc::BigInt<IntT> res;
     std::random_device ran_dev;
     std::mt19937 ran_eng(ran_dev());
     std::uniform_int_distribution<uint16_t> ran;
@@ -61,7 +62,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
               << "(prevent optimizing out the whole loop)" << std::endl;
 
     test_count = 0;
-    tot_len = 16;
+    tot_len = 32;
     start_time = std::chrono::high_resolution_clock::now();
     std::cout << std::boolalpha;
     a.GenRandom(tot_len);

@@ -3,7 +3,7 @@
 
 #include "../src/bigint.hpp"
 int main() {
-    calc::BigInt<uint32_t> a(12345);
+    calc::BigInt<uint8_t> a(12345);
     a = calc::Power(a, 12345ul);
     std::cout << "print(12345**12345 == " << a << ")" << std::endl;
     return 0;

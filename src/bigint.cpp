@@ -6,6 +6,7 @@
 #include "bigint_ext.cpp"
 #include "bigint_io.cpp"
 #include "bigint_mul.cpp"
+#include "bigint_mul_deprecated.cpp"
 // If there are other cpp files, include them here,
 // because instanizaiton is only here.
 namespace calc {
@@ -23,8 +24,13 @@ BigInt<IntT>::BigInt(int value)
             val_[len_++] = IntT(value);
             value >>= LIMB;
         } while (value != 0 && value != -1);
-        if (len_ < cap_) std::fill(val_ + len_, val_ + cap_, IntT(0));
-        if (len_ == 0) len_ = 1;
+        if (len_ < cap_) {
+            std::fill(val_ + len_, val_ + cap_, IntT(0));
+            if (value >= 0)
+                val_[len_++] = IntT(0);
+            else
+                val_[len_++] = IntT(-1);
+        }
         ShrinkLen();
     }
 }

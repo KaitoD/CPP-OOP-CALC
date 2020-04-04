@@ -1,30 +1,34 @@
 #include <iostream>
+
 #include "../src/bigint.hpp"
 // test different multiplication
-void do_test(calc::BigInt<>& a, calc::BigInt<>& b) {
+using IntT = uint8_t;
+void do_test(calc::BigInt<IntT>& a, calc::BigInt<IntT>& b) {
     std::cout << std::hex << std::showbase;
     std::cout << a << " * " << b << " == " << a.PlainMul(a, b) << std::endl;
     std::cout << a << " * " << b << " == " << a.FFTMul(a, b) << std::endl;
-
-    std::cout << std::dec;
-    std::cout << a << " * " << b << " == " << a.PlainMul(a, b) << std::endl;
-    std::cout << a << " * " << b << " == " << a.FFTMul(a, b) << std::endl;
+    std::cout << a << " * " << b << " == " << a.NFFTMul(a, b) << std::endl;
+    std::cout << a << " * " << b << " == " << a.MNTMul(a, b) << std::endl;
+    std::cout << a << " * " << b << " == " << a.NMNTMul(a, b) << std::endl;
+    std::cout << a << " * " << b << " == " << a.MulKaratsuba(a, b) << std::endl;
+    std::cout << a << " * " << b << " == " << a.MulToomCook3(a, b) << std::endl;
 }
-void do_more_test(calc::BigInt<>& a, calc::BigInt<>& b) {
+void do_more_test(calc::BigInt<IntT>& a, calc::BigInt<IntT>& b) {
     std::cout << a << " * " << b << " == " << a.FFTMul(a, b) << std::endl;
     std::cout << a << " * " << b << " == " << a * b << std::endl;
 }
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    calc::BigInt<> a(1);
-    calc::BigInt<> b(2);
+    calc::BigInt<IntT> a(1);
+    calc::BigInt<IntT> b(2);
     std::srand(static_cast<unsigned>(time(nullptr)));
-    do_test(a.GenRandom(3), b.GenRandom(7));
+    constexpr int len = 15;
+    do_test(a.GenRandom(len), b.GenRandom(len));
     std::cout << std::endl;
-    do_test(a.GenRandom(3).ToOpposite(), b.GenRandom(7));
+    do_test(a.GenRandom(len).ToOpposite(), b.GenRandom(len));
     std::cout << std::endl;
-    do_test(a.GenRandom(3), b.GenRandom(7).ToOpposite());
+    do_test(a.GenRandom(len), b.GenRandom(len).ToOpposite());
     std::cout << std::endl;
-    do_test(a.GenRandom(3).ToOpposite(), b.GenRandom(7).ToOpposite());
+    do_test(a.GenRandom(len).ToOpposite(), b.GenRandom(len).ToOpposite());
     std::cout << std::endl;
     do_more_test(a.GenRandom(20), b.GenRandom(50));
     do_more_test(a.GenRandom(20).ToOpposite(), b.GenRandom(50));

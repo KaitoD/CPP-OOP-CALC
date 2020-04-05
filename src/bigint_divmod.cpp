@@ -343,8 +343,8 @@ BigInt<IntT>& BigInt<IntT>::DivEqRecursive(const BigInt& rhs, BigInt* mod) {
         *this >>= mov;
         if (mod) *mod = std::move(*this);
         *this = std::move(result);
-        if (sign) ToOpposite();
     }
+    if (sign) ToOpposite();
     if (mod) {
         if (sign) mod->ToOpposite();
         mod->ShrinkLen();

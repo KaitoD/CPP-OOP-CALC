@@ -115,7 +115,8 @@ BigInt<IntT>& BigInt<IntT>::ToNextPrime() {
             if (tmp > cond1) tmp -= *this;
             if (tmp == BigInt<IntT>(1) || tmp == cond2) continue;
             for (k = 0; k < s - 1; ++k) {
-                tmp = tmp * tmp % *this;
+                tmp.Square();
+                tmp %= *this;
                 if (tmp > cond1) tmp -= *this;
                 if (tmp == cond2) break;
             }
@@ -172,7 +173,8 @@ bool BigInt<IntT>::isProbablePrime() const {
         if (tmp > cond1) tmp -= *this;
         if (tmp == BigInt<IntT>(1) || tmp == cond2) continue;
         for (i = 0; i < s - 1; ++i) {
-            tmp = tmp * tmp % *this;
+            tmp.Square();
+            tmp %= *this;
             if (tmp > cond1) tmp -= *this;
             if (tmp == cond2) break;
         }
@@ -231,7 +233,7 @@ BigInt<IntT> Power(const BigInt<IntT>& a, uint64_t p) {
     uint64_t mask = 1;
     for (; mask <= p; mask <<= 1) {
         if (p & mask) result *= tmp;
-        tmp = tmp * tmp;
+        tmp.Square();
     }
     return result;
 }
@@ -247,7 +249,7 @@ BigInt<IntT> PowMod(const BigInt<IntT>& a, const BigInt<IntT>& p,
         for (mask = 1; mask; mask <<= 1) {
             if (i == p.len_ - 1 && mask > p.val_[i]) break;
             if (p.val_[i] & mask) result *= tmp;
-            tmp = tmp * tmp;
+            tmp.Square();
             if (tmp.len_ > n.len_) tmp %= n;
             if (result.len_ > n.len_) result %= n;
         }
@@ -262,7 +264,7 @@ BigInt<IntT> PowMod(const BigInt<IntT>& a, uint64_t p, const BigInt<IntT>& n) {
     uint64_t mask = 1;
     for (; mask <= p; mask <<= 1) {
         if (p & mask) result *= tmp;
-        tmp = tmp * tmp;
+        tmp.Square();
         if (tmp.len_ > n.len_) tmp %= n;
         if (result.len_ > n.len_) result %= n;
     }

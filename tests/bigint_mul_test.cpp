@@ -2,7 +2,7 @@
 
 #include "../src/bigint.hpp"
 // test different multiplication
-using IntT = uint8_t;
+using IntT = uint32_t;
 void do_test(calc::BigInt<IntT>& a, calc::BigInt<IntT>& b) {
     std::cout << std::hex << std::showbase;
     std::cout << a << " * " << b << " == " << a.PlainMul(a, b) << std::endl;

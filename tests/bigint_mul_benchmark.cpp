@@ -4,7 +4,7 @@
 
 #include "../src/bigint.hpp"
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    using IntT = uint16_t;
+    using IntT = uint32_t;
     calc::BigInt<IntT> a(1);
     calc::BigInt<IntT> b(2);
     calc::BigInt<IntT> res;

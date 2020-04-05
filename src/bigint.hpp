@@ -13,7 +13,7 @@ class CompMp;
 // self-modifying functions should ensure the length is reset.
 // A longer limb may cause faster add/sub,
 // and multiplication can automatically cast it to a shorter limb
-template <typename IntT = uint16_t>
+template <typename IntT = uint32_t>
 class BigInt {
     template <typename _IntT>
     friend class BigInt;
@@ -99,6 +99,7 @@ class BigInt {
     BigInt& operator/=(const BigInt& rhs);
     BigInt& operator%=(IntT rhs);
     BigInt& operator%=(const BigInt& rhs);
+    BigInt& Square();
     BigInt& BasicDivEq(IntT rhs, IntT* mod = nullptr);
     BigInt& PlainMulEq(const BigInt& rhs);
     BigInt& NFFTMulEq(const BigInt& rhs);
@@ -150,6 +151,12 @@ class BigInt {
     // construct from raw data
     template <typename _IntT>
     explicit BigInt(const _IntT* data, size_t length);
+    template <typename _IntT>
+    BigInt& MoveFrom(BigInt<_IntT>&& rhs);
+    template <typename _IntT>
+    const BigInt& LinkAs(const BigInt<_IntT>& rhs);
+    template <typename _IntT>
+    BigInt& DetachLink(const BigInt<_IntT>& rhs);
 
     // data
     static constexpr size_t LIMB = sizeof(IntT) << 3;

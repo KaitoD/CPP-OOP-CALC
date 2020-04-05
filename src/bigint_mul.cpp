@@ -196,6 +196,52 @@ BigInt<IntT>& BigInt<IntT>::operator*=(const BigInt& rhs) {
     return *this;
 }
 template <typename IntT>
+BigInt<IntT>& BigInt<IntT>::Square() {
+    if (len_ < 5) return *this = *this * *this;
+    if (LIMB >= 32 && LIMB * len_ < 80000) {
+        BigInt<uint16_t> tmp_obj;
+        tmp_obj.MoveFrom(std::move(*this));
+        tmp_obj.Square();
+        return MoveFrom(std::move(tmp_obj));
+    } else if (LIMB >= 16 && LIMB * len_ >= 80000) {
+        BigInt<uint8_t> tmp_obj;
+        tmp_obj.MoveFrom(std::move(*this));
+        tmp_obj.Square();
+        return MoveFrom(std::move(tmp_obj));
+    }
+    using T = double;
+    T* v;
+    size_t n = 1, i = 0;
+    ToAbsolute();
+    while (n < len_ + len_) n <<= 1;
+    v = new T[n];
+    for (; i < len_; ++i) v[i] = val_[i];
+    for (; i < n; ++i) v[i] = 0;
+    NFFT(v, n, false);
+    T t1, t2, t3, t4;
+    size_t n2 = n >> 1;
+    v[0] *= v[0];
+    v[n2] *= v[n2];
+    for (i = 1; i < n2; ++i) {
+        t1 = v[i];
+        t2 = v[n - i];
+        t3 = (v[i] + v[n - i]) / 2.0;
+        t4 = (v[i] - v[n - i]) / 2.0;
+        v[i] = t1 * t3 + t2 * t4;
+        v[n - i] = t2 * t3 - t1 * t4;
+    }
+    NFFT(v, n, true);
+    SetLen(len_ + len_ + 1, true);
+    uint64_t tmp = 0;
+    for (i = 0; i < len_ - 1; ++i) {
+        tmp = (tmp >> LIMB) + static_cast<uint64_t>(std::lround(v[i]));
+        val_[i] = static_cast<IntT>(tmp);
+    }
+    ShrinkLen();
+    delete[] v;
+    return *this;
+}
+template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::PlainMulEq(const BigInt& rhs) {
     if (rhs.Sign()) {
         PlainMulEq(-rhs);
@@ -208,7 +254,7 @@ BigInt<IntT>& BigInt<IntT>::PlainMulEq(const BigInt& rhs) {
     if (Sign()) ToOpposite();
     for (size_t i = 0; i < rhs.len_; ++i)
         result += ((*this) * rhs.val_[i]) << (LIMB * i);
-    *this = result;
+    *this = std::move(result);
     if (sign) ToOpposite();
     ShrinkLen();
     return *this;
@@ -217,15 +263,19 @@ template <typename IntT>
 BigInt<IntT>& BigInt<IntT>::NFFTMulEq(const BigInt& rhs) {
     size_t min_len = std::max(len_, rhs.len_);
     if (LIMB >= 32 && LIMB * min_len < 80000) {
-        auto tmp_obj = BigInt<uint16_t>(val_, len_);
-        tmp_obj.NFFTMulEq(BigInt<uint16_t>(rhs.val_, rhs.len_));
-        *this = BigInt<IntT>(tmp_obj.val_, tmp_obj.len_);
-        return *this;
+        BigInt<uint16_t> tmp_obj, tmp_rhs;
+        tmp_obj.MoveFrom(std::move(*this));
+        tmp_rhs.LinkAs(rhs);
+        tmp_obj.NFFTMulEq(tmp_rhs);
+        tmp_rhs.DetachLink(rhs);
+        return MoveFrom(std::move(tmp_obj));
     } else if (LIMB >= 16 && LIMB * min_len >= 80000) {
-        auto tmp_obj = BigInt<uint8_t>(val_, len_);
-        tmp_obj.NFFTMulEq(BigInt<uint8_t>(rhs.val_, rhs.len_));
-        *this = BigInt<IntT>(tmp_obj.val_, tmp_obj.len_);
-        return *this;
+        BigInt<uint8_t> tmp_obj, tmp_rhs;
+        tmp_obj.MoveFrom(std::move(*this));
+        tmp_rhs.LinkAs(rhs);
+        tmp_obj.NFFTMulEq(tmp_rhs);
+        tmp_rhs.DetachLink(rhs);
+        return MoveFrom(std::move(tmp_obj));
     }
     if (rhs.Sign()) {
         NFFTMulEq(-rhs);
@@ -277,10 +327,12 @@ BigInt<IntT>& BigInt<IntT>::MNTMulEq(const BigInt& rhs) {
     if (LIMB * min_len >= 262144) {
         return NFFTMulEq(rhs);
     } else if (LIMB >= 16) {
-        auto tmp_obj = BigInt<uint8_t>(val_, len_);
-        tmp_obj.MNTMulEq(BigInt<uint8_t>(rhs.val_, rhs.len_));
-        *this = BigInt<IntT>(tmp_obj.val_, tmp_obj.len_);
-        return *this;
+        BigInt<uint8_t> tmp_obj, tmp_rhs;
+        tmp_obj.MoveFrom(std::move(*this));
+        tmp_rhs.LinkAs(rhs);
+        tmp_obj.NFFTMulEq(tmp_rhs);
+        tmp_rhs.DetachLink(rhs);
+        return MoveFrom(std::move(tmp_obj));
     }
     if (rhs.Sign()) {
         MNTMulEq(-rhs);

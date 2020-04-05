@@ -4,7 +4,7 @@
 #include "../src/bigint.hpp"
 // test different multiplication
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    using IntT = uint16_t;
+    using IntT = uint32_t;
     calc::BigInt<IntT> a(1);
     calc::BigInt<IntT> b(2);
     calc::BigInt<IntT> x, y;
@@ -62,16 +62,16 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
               << "(prevent optimizing out the whole loop)" << std::endl;
 
     test_count = 0;
-    tot_len = 32;
+    tot_len = 64 / sizeof(IntT);
     start_time = std::chrono::high_resolution_clock::now();
     std::cout << std::boolalpha;
-    a.GenRandom(tot_len);
+    a.GenRandom(tot_len, 32);
     std::cout << "Get a prime: " << a.ToNextPrime() << std::endl;
     end_time = std::chrono::high_resolution_clock::now();
     duration = end_time - start_time;
     ++test_count;
     std::printf("Note: length is exactly %lu (%lu bits)\n", tot_len,
-                tot_len << 4);
+                (tot_len * sizeof(IntT)) << 3);
     std::printf("Tested prime generation.\n");
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     a = "9168350993493354289721280135289246231112934508397010171811856211345545"

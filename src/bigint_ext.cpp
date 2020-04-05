@@ -228,47 +228,53 @@ BigInt<IntT> Factorial(uint64_t n) {
 }
 template <typename IntT>
 BigInt<IntT> Power(const BigInt<IntT>& a, uint64_t p) {
-    BigInt<IntT> tmp(a), result(1);
     if (!p) return BigInt<IntT>(1);
-    uint64_t mask = 1;
-    for (; mask <= p; mask <<= 1) {
-        if (p & mask) result *= tmp;
-        tmp.Square();
+    uint64_t mask = 1ul << 63ul;
+    for (; mask; mask >>= 1)
+        if (p & mask) break;
+    BigInt<IntT> result(a);
+    mask >>= 1;
+    for (; mask; mask >>= 1) {
+        result.Square();
+        if (p & mask) result *= a;
     }
     return result;
 }
 template <typename IntT>
 BigInt<IntT> PowMod(const BigInt<IntT>& a, const BigInt<IntT>& p,
                     const BigInt<IntT>& n) {
-    BigInt<IntT> tmp(a), result(1);
     if (p.Sign()) return BigInt<IntT>(0);
     if (!p) return BigInt<IntT>(1);
-    if (tmp > n) tmp %= n;
-    IntT mask = 1;
-    for (size_t i = 0; i < p.len_; ++i) {
-        for (mask = 1; mask; mask <<= 1) {
-            if (i == p.len_ - 1 && mask > p.val_[i]) break;
-            if (p.val_[i] & mask) result *= tmp;
-            tmp.Square();
-            if (tmp.len_ > n.len_) tmp %= n;
+    if (a > n) return PowMod(a % n, p, n);
+    IntT mask = IntT(1) << (a.LIMB - 1);
+    for (; mask; mask >>= 1)
+        if (p.val_[p.len_ - 1] & mask) break;
+    BigInt<IntT> result(1);
+    for (size_t i = p.len_ - 1; i != size_t(-1); --i) {
+        for (; mask; mask >>= 1) {
+            result.Square();
+            if (p.val_[i] & mask) result *= a;
             if (result.len_ > n.len_) result %= n;
         }
+        mask = IntT(1) << (a.LIMB - 1);
     }
-    return result;
+    return std::move(result) % n;
 }
 template <typename IntT>
 BigInt<IntT> PowMod(const BigInt<IntT>& a, uint64_t p, const BigInt<IntT>& n) {
-    BigInt<IntT> tmp(a), result(1);
     if (!p) return BigInt<IntT>(1);
-    if (tmp > n) tmp %= n;
-    uint64_t mask = 1;
-    for (; mask <= p; mask <<= 1) {
-        if (p & mask) result *= tmp;
-        tmp.Square();
-        if (tmp.len_ > n.len_) tmp %= n;
+    if (a > n) return PowMod(a % n, p, n);
+    uint64_t mask = 1ul << 63ul;
+    for (; mask; mask >>= 1)
+        if (p & mask) break;
+    BigInt<IntT> result(a);
+    mask >>= 1;
+    for (; mask; mask >>= 1) {
+        result.Square();
+        if (p & mask) result *= a;
         if (result.len_ > n.len_) result %= n;
     }
-    return result;
+    return std::move(result) % n;
 }
 template <typename IntT>
 BigInt<IntT> GcdBin(BigInt<IntT> a, BigInt<IntT> b) {

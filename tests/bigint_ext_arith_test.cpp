@@ -1,14 +1,16 @@
 #include <iostream>
+
 #include "../src/bigint.hpp"
 // test different multiplication
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    calc::BigInt<> a(1);
-    calc::BigInt<> b(2);
-    calc::BigInt<> x, y;
+    using IntT = uint32_t;
+    calc::BigInt<IntT> a(1);
+    calc::BigInt<IntT> b(2);
+    calc::BigInt<IntT> x, y;
     std::srand(static_cast<unsigned>(time(nullptr)));
     std::cout << std::dec;
     uint64_t x1 = 100;
-    auto c = calc::Factorial<uint16_t>(x1);
+    auto c = calc::Factorial<IntT>(x1);
     std::cout << "math.factorial(" << x1 << ") == " << c << std::endl;
     size_t test_count = 24;
     for (size_t i = 0; i < test_count; ++i) {
@@ -26,7 +28,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << "is " << a << " prime?" << std::endl;
     std::cout << std::boolalpha << true << std::endl;
     std::cout << "This is a prime:" << std::endl;
-    a = calc::BigInt<>(
+    a = calc::BigInt<IntT>(
         "1076178293437128762543905423860046918260172323085300723741843414983154"
         "6985795300225003100353833864376314482066276979888950830293120041396754"
         "377320551927531");

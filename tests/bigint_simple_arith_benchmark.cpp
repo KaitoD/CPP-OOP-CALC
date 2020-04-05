@@ -3,9 +3,10 @@
 
 #include "../src/bigint.hpp"
 int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
-    calc::BigInt<> a(1);
-    calc::BigInt<> b(2);
-    calc::BigInt<> res;
+    using IntT = uint32_t;
+    calc::BigInt<IntT> a(1);
+    calc::BigInt<IntT> b(2);
+    calc::BigInt<IntT> res;
     std::random_device ran_dev;
     std::mt19937 ran_eng(ran_dev());
     std::uniform_int_distribution<uint16_t> ran;
@@ -47,13 +48,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",
                 duration.count() / 1e3 / 3.0 / tot_len);
-    std::cout << (res & calc::BigInt<>(0xff))
+    std::cout << (res & calc::BigInt<IntT>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
 
     tot_len = 0;
     a.Shrink();
     res.Shrink();
-    uint16_t c, tres = 1;
+    IntT c, tres = 1;
     start_time = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng));
@@ -71,7 +72,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",
                 duration.count() / 1e3 / 3.0 / tot_len);
-    std::cout << (res & calc::BigInt<>(0xff))
+    std::cout << (res & calc::BigInt<IntT>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
     return 0;
 }

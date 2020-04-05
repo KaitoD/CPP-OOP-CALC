@@ -18,7 +18,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::cout << std::dec;
     uint64_t x1 = 10000;
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto c = calc::Factorial<uint16_t>(x1);
+    auto c = calc::Factorial<IntT>(x1);
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = end_time - start_time;
     // std::cout << "math.factorial(" << x1 << ") == " << c << std::endl;
@@ -40,7 +40,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb: %.3lfus\n",
                 duration.count() / 1e3 / tot_len);
-    std::cout << (c & calc::BigInt<>(0xff))
+    std::cout << (c & calc::BigInt<IntT>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
 
     tot_len = 0;
@@ -58,7 +58,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb: %.3lfus\n",
                 duration.count() / 1e3 / tot_len);
-    std::cout << (c & calc::BigInt<>(0xff))
+    std::cout << (c & calc::BigInt<IntT>(0xff))
               << "(prevent optimizing out the whole loop)" << std::endl;
 
     test_count = 0;

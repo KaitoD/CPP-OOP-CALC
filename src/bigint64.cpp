@@ -158,7 +158,7 @@ BigInt<uint128_t> BigInt<uint128_t>::operator-() const {
 }
 void BigInt<uint128_t>::SetLen(uint64_t new_len, bool preserve_sign) {
     bool sign = Sign();
-    constexpr auto int_size = sizeof(uint128_t);
+    // constexpr auto int_size = sizeof(uint128_t);
     if (new_len > len_) {
         if (new_len >= cap_) {
             cap_ <<= 1;
@@ -180,7 +180,7 @@ void BigInt<uint128_t>::SetLen(uint64_t new_len, bool preserve_sign) {
         } else {
             if (preserve_sign && sign)
                 // std::memset(val_ + len_, -1, (new_len - len_) * int_size);
-                std::fill(val_ + len_, val_ + new_len, 0);
+                std::fill(val_ + len_, val_ + new_len, -1);
         }
         len_ = new_len;
         end_ = val_ + len_;
@@ -388,10 +388,10 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator+=(const BigInt& rhs) {
     auto it = val_;
     auto cit = rhs.val_;
     if (rhs.Sign()) {
+        *end_ = -1;
         *it += *cit;
         asm("leaq 16(%1), %1\n\tleaq 16(%0), %0" : : "r"(it), "r"(cit));
     bi128_pLER_loop1:
-		// FIXME()
         asm goto(R"(
 	movq (%1), %%r8
 	movq 8(%1), %%r9
@@ -469,7 +469,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
     SetLen(std::max(rhs.len_, len_) + 1, true);
     auto it = val_;
     auto cit = rhs.val_;
-    *end_ = -1;
     if (rhs.Sign()) {
         *it -= *cit;
         asm("leaq 16(%1), %1\n\tleaq 16(%0), %0" : : "r"(it), "r"(cit));
@@ -507,6 +506,7 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
                  : "cc", "memory"
                  : bi128_mIER_loop11);
     } else {
+        *end_ = -1;
         *it -= *cit;
         asm("leaq 16(%1), %1\n\tleaq 16(%0), %0" : : "r"(it), "r"(cit));
     bi128_mIER_loop2:

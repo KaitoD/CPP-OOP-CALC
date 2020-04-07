@@ -30,7 +30,7 @@ WARNINGFLAGS=-Wall -Weffc++ -pedantic \
 			 -Wtautological-compare \
 			 -Wno-unused-result \
 			 -Wno-aggregate-return \
-			 -Wno-conversion 
+			 -Wno-conversion
 INSTRUMENTFLAGS=-Og -g -fsanitize=address \
 				-fsanitize=leak -fsanitize=undefined \
 				-fsanitize-address-use-after-scope \
@@ -54,7 +54,7 @@ INSTRUMENTFLAGS=-O0 -g -fsanitize=undefined  \
 endif
 
 # set targets here
-RELEASE_TARGETS=
+RELEASE_TARGETS=bigint64_test
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
 			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test \
 			  bigint_io_test

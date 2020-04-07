@@ -12,5 +12,6 @@
 - 2020/3/31 Extended arithmetic including gcd, primality test. Fixed some bugs.
   Add a divide-and-conquer division algorithm.
 - 2020/4/3 Add prime generation.
+- 2020/4/8 Add branch 'performance': try to improve performance.
 
 [doc.md]: doc.md

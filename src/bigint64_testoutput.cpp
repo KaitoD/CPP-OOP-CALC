@@ -1,12 +1,14 @@
+#include <iomanip>
+
 #include "bigint64.cpp"
 #include "bigint64.hpp"
 namespace calc {
 void BigInt<uint128_t>::Print(int base, int showbase, bool uppercase,
-                              std::FILE* f) {
+                              std::FILE* f) const {
     if (Sign()) {
         auto tmp_obj = -*this;
         std::fputc('-', f);
-        tmp_obj.Print(base, uppercase, showbase, f);
+        tmp_obj.Print(base, showbase, uppercase, f);
         return;
     } else if (!*this) {
         std::fprintf(f, "0");
@@ -41,24 +43,70 @@ void BigInt<uint128_t>::Print(int base, int showbase, bool uppercase,
     if (base == 16) {
         auto it = end_ - 1;
         if (uppercase) {
-            std::printf("%08llX%08llX", *(reinterpret_cast<uint64_t*>(it) + 1),
-                        *reinterpret_cast<uint64_t*>(it));
+            if (!*it) --it;
+            if (*(reinterpret_cast<uint64_t*>(it) + 1)) {
+                std::fprintf(f, "%llX%016llX",
+                             *(reinterpret_cast<uint64_t*>(it) + 1),
+                             *reinterpret_cast<uint64_t*>(it));
+            } else {
+                std::fprintf(f, "%llX", *reinterpret_cast<uint64_t*>(it));
+            }
             while (it != val_) {
                 --it;
-                std::printf("%08llX%08llX",
-                            *(reinterpret_cast<uint64_t*>(it) + 1),
-                            *reinterpret_cast<uint64_t*>(it));
+                std::fprintf(f, "%016llX%016llX",
+                             *(reinterpret_cast<uint64_t*>(it) + 1),
+                             *reinterpret_cast<uint64_t*>(it));
             }
         } else {
-            std::printf("%08llx%08llx", *(reinterpret_cast<uint64_t*>(it) + 1),
-                        *reinterpret_cast<uint64_t*>(it));
+            if (!*it) --it;
+            if (*(reinterpret_cast<uint64_t*>(it) + 1)) {
+                std::fprintf(f, "%llx%016llx",
+                             *(reinterpret_cast<uint64_t*>(it) + 1),
+                             *reinterpret_cast<uint64_t*>(it));
+            } else {
+                std::fprintf(f, "%llx", *reinterpret_cast<uint64_t*>(it));
+            }
             while (it != val_) {
                 --it;
-                std::printf("%08llx%08llx",
-                            *(reinterpret_cast<uint64_t*>(it) + 1),
-                            *reinterpret_cast<uint64_t*>(it));
+                std::fprintf(f, "%016llx%016llx",
+                             *(reinterpret_cast<uint64_t*>(it) + 1),
+                             *reinterpret_cast<uint64_t*>(it));
             }
         }
     }
+}
+std::ostream& operator<<(std::ostream& out, const BigInt<uint128_t>& rhs) {
+    // std::fprintf(stdout, "high: %llx, %llx\n",
+    // *(reinterpret_cast<uint64_t*>(rhs.end_) - 1),
+    // *(reinterpret_cast<uint64_t*>(rhs.end_) - 2));
+    if (rhs.Sign()) {
+        out.put('-');
+        return out << -rhs;
+    } else if (!rhs) {
+        return out.put('0');
+    }
+    bool showbase = out.flags() & out.showbase;
+    if (out.flags() & out.hex) {
+        auto it = rhs.end_ - 1;
+        if (!*it) --it;
+        if (*(reinterpret_cast<uint64_t*>(it) + 1)) {
+            out << *(reinterpret_cast<uint64_t*>(it) + 1);
+            out.unsetf(out.showbase);
+            out << std::setfill('0') << std::setw(16)
+                << *reinterpret_cast<uint64_t*>(it);
+        } else {
+            out << *reinterpret_cast<uint64_t*>(it);
+            out.unsetf(out.showbase);
+        }
+        while (it != rhs.val_) {
+            --it;
+            out << std::setfill('0') << std::setw(16)
+                << *(reinterpret_cast<uint64_t*>(it) + 1);
+            out << std::setfill('0') << std::setw(16)
+                << *reinterpret_cast<uint64_t*>(it);
+        }
+    }
+    if (showbase) out.setf(out.showbase);
+    return out;
 }
 }  // namespace calc

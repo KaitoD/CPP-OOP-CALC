@@ -30,8 +30,7 @@ WARNINGFLAGS=-Wall -Weffc++ -pedantic \
 			 -Wtautological-compare \
 			 -Wno-unused-result \
 			 -Wno-aggregate-return \
-			 -Wno-conversion \
-			 -Wno-c++17-extensions
+			 -Wno-conversion 
 INSTRUMENTFLAGS=-Og -g -fsanitize=address \
 				-fsanitize=leak -fsanitize=undefined \
 				-fsanitize-address-use-after-scope \
@@ -172,6 +171,10 @@ bigint_io_benchmark: compile/bigint_io_benchmark.o compile/bigint.o
 compile/bigint_io_benchmark.o: src/bigint.hpp tests/bigint_io_benchmark.cpp
 	$(CXX) $(CXXFLAGS) -c tests/bigint_io_benchmark.cpp \
 		-o compile/bigint_io_benchmark.o
+
+bigint64_test: tests/bigint64_test.cpp src/bigint64_testoutput.cpp \
+	src/bigint64.hpp src/bigint64.cpp
+	$(CXX) $(CXXFLAGS) tests/bigint64_test.cpp -o bigint64_test
 
 .PHONY: all clean clean-all
 clean:

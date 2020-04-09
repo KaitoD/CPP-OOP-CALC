@@ -86,6 +86,26 @@ BigInt<uint128_t>::operator int64_t() const {
 }
 bool BigInt<uint128_t>::Sign() const { return *(end_ - 1) >> (LIMB - 1); }
 bool BigInt<uint128_t>::Parity() const { return *val_ & 1; }
+uint64_t BigInt<uint128_t>::TrailingZero() const {
+    auto it = val_;
+    while (!*it && it != end_) ++it;
+    if (it == end_) return 1;  // is zero, is even number
+    uint64_t j;
+    asm goto(R"(
+	bsfq (%0), %1
+	movq %1, %2
+	jnz %l3
+	bsfq 8(%0), %1
+	addq $64, %1
+	movq %1, %2
+)"
+             :
+             : "r"(it), "r"(j), "m"(j)
+             : "cc", "memory"
+             : bi128_Trail_ret);
+bi128_Trail_ret:
+    return ((it - val_) << LOGLIMB) + j;
+}
 void BigInt<uint128_t>::SetLen(uint64_t new_len, bool preserve_sign) {
     bool sign = Sign();
     // constexpr auto int_size = sizeof(uint128_t);
@@ -196,4 +216,15 @@ BigInt<uint128_t>& BigInt<uint128_t>::GenRandom(uint64_t length,
     if (Sign()) SetLen(len_ + 1, false);
     return *this;
 }
+double BigInt<uint128_t>::log2() const {
+    auto it = end_ - 1;
+    bool sign = Sign();
+    uint128_t empty_limb = sign ? -1 : 0;
+    while (*it == empty_limb && it > val_) --it;
+    if (sign)
+        return std::log2(double(~*it + 1)) + ((it - val_) << LOGLIMB);
+    else
+        return std::log2(double(*it)) + ((it - val_) << LOGLIMB);
+}
+double BigInt<uint128_t>::log10() const { return log2() / std::log2(10.0); }
 }  // namespace calc

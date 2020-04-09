@@ -33,10 +33,6 @@ class BigInt<uint128_t> {
     // NOLINTNEXTLINE: c++17 ok
     inline static std::uniform_int_distribution<uint64_t> rand_;
 
-    // bigint64_basic.cpp
-    void ShrinkLen();
-    void SetLen(uint64_t new_len, bool preserve_sign);
-
    public:
     // bigint64_basic.cpp
     explicit BigInt(int value = 0);
@@ -53,8 +49,12 @@ class BigInt<uint128_t> {
     bool Parity() const;
     const uint128_t* Data() const;
     uint64_t Length() const;
+    void ShrinkLen();
+    void SetLen(uint64_t new_len, bool preserve_sign);
     // shrink size
     void Shrink();
+    double log2() const;
+    double log10() const;
 
     // bigint64_bit.cpp
     BigInt& ToBitInv();
@@ -84,14 +84,20 @@ class BigInt<uint128_t> {
                std::FILE* f = stdout) const;
     friend std::ostream& operator<<(std::ostream& out,
                                     const BigInt<uint128_t>& rhs);
-    // TODO
+
+    // bigint64_compare.cpp
 #ifdef __cpp_impl_three_way_comparison
     std::weak_ordering operator<=>(const BigInt& rhs) const;
 #else
     int Compare(const BigInt& rhs) const;
 #endif
-    double log2() const;
-    double log10() const;
+
+    // bigint64_div.cpp
+    // note this is not unsigned
+    BigInt& DivEq64(int64_t rhs, int64_t* remain);
+    BigInt& operator/=(int64_t rhs);
+
+    // TODO
     template <typename T>
     static void BitRevSort(T* a, size_t n);
     // real transform
@@ -101,7 +107,8 @@ class BigInt<uint128_t> {
     BigInt& RFFTMulEq(const BigInt& rhs);
     BigInt& RMNTMulEq(const BigInt& rhs);
     BigInt& RFFTExtMulEq(const BigInt& rhs);
-    size_t TrailingZero() const;
+    uint64_t TrailingZero() const;
+    BigInt& operator*=(int64_t rhs);
 };
 BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);

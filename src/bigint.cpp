@@ -259,7 +259,7 @@ std::strong_ordering BigInt<IntT>::operator<=>(const BigInt& rhs) const {
         for (size_t i = rhs.len_ - 1; i != size_t(-1); --i)
             if ((cmp = val_[i] <=> rhs.val_[i]) != 0) return cmp;
     }
-    return std::strong_ordering_equal;
+    return std::strong_ordering::equal;
 }
 #else
 template <typename IntT>

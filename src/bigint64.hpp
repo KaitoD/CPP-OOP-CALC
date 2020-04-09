@@ -11,6 +11,7 @@ template <typename IntT>
 class BigInt;
 
 typedef __uint128_t uint128_t;
+typedef __int128_t int128_t;
 
 // Work fine on little-endian machine. On big-endian, reverse the whole vector.
 template <>
@@ -100,17 +101,24 @@ class BigInt<uint128_t> {
     BigInt& DivEq64(int64_t rhs, int64_t* remain);
     BigInt& operator/=(int64_t rhs);
 
-    // TODO
-    template <typename T>
-    static void BitRevSort(T* a, size_t n);
-    // real transform
-    static void RFFT(double* dest, size_t n, bool inv);
-    static void RMNT(int64_t* dest, size_t n, bool inv);
-    static void RFFTExt(std::complex<long double>* dest, size_t n, bool inv);
-    BigInt& RFFTMulEq(const BigInt& rhs);
-    BigInt& RMNTMulEq(const BigInt& rhs);
-    BigInt& RFFTExtMulEq(const BigInt& rhs);
+    // bigint64_mul.cpp
     BigInt& operator*=(uint64_t rhs);
+    template <typename T>
+    static void BitRevSort(T* a, uint64_t n);
+    static void RMNT(int64_t* dest, uint64_t n, bool inv);
+    BigInt& RMNTMulEq(const BigInt& rhs);
+    static BigInt RMNTMul(BigInt lhs, const BigInt& rhs);
+    static void MNT(CompMp* dest, uint64_t n, bool inv);
+    BigInt& MNTMulEq(const BigInt& rhs);
+    static BigInt MNTMul(BigInt lhs, const BigInt& rhs);
+
+    // TODO
+    // real transform
+    static void RFFT(double* dest, uint64_t n, bool inv);
+    static void RFFTExt(std::complex<long double>* dest, uint64_t n, bool inv);
+    BigInt& RFFTMulEq(const BigInt& rhs);
+    BigInt& RFFTExtMulEq(const BigInt& rhs);
+    BigInt& operator*=(const BigInt& rhs);
 };
 BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);

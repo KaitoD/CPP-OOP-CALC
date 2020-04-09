@@ -13,7 +13,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char* argv[]) {
     std::uniform_int_distribution<uint16_t> ran;
     size_t tot_len = 0;
     int test_count = 16;
-    uint16_t mask = 0xfff;
+    uint16_t mask = 0x3fff;
     // eliminate time for random generate
     auto start_time = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < test_count; ++i) {

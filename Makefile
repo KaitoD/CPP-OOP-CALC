@@ -54,7 +54,7 @@ INSTRUMENTFLAGS=-O0 -g -fsanitize=undefined  \
 endif
 
 # set targets here
-RELEASE_TARGETS=bigint64_test
+RELEASE_TARGETS=bigint64_test bigint64_benchmark bigint64_test2
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
 			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test \
 			  bigint_io_test
@@ -174,11 +174,20 @@ compile/bigint_io_benchmark.o: src/bigint.hpp tests/bigint_io_benchmark.cpp
 
 compile/bigint64.o: src/bigint64.cpp src/bigint64.hpp src/bigint64_bit.cpp \
 	src/bigint64_io.cpp src/bigint64_add.cpp src/bigint64_basic.cpp \
+	src/bigint64_mul.cpp src/bigint64_div.cpp src/bigint64_compare.cpp
 	$(CXX) $(CXXFLAGS) -c src/bigint64.cpp -o compile/bigint64.o
 
 bigint64_test: tests/bigint64_test.cpp \
 	src/bigint64.hpp compile/bigint64.o
 	$(CXX) $(CXXFLAGS) tests/bigint64_test.cpp compile/bigint64.o -o bigint64_test
+
+bigint64_test2: tests/bigint64_test2.cpp \
+	src/bigint64.hpp compile/bigint64.o
+	$(CXX) $(CXXFLAGS) tests/bigint64_test2.cpp compile/bigint64.o -o bigint64_test2
+
+bigint64_benchmark: tests/bigint64_benchmark.cpp \
+	src/bigint64.hpp compile/bigint64.o
+	$(CXX) $(CXXFLAGS) tests/bigint64_benchmark.cpp compile/bigint64.o -o bigint64_benchmark
 
 .PHONY: all clean clean-all
 clean:

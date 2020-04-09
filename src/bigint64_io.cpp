@@ -212,10 +212,11 @@ std::string BigInt<uint128_t>::ToString(int base, int showbase,
         divbase = divbase * divbase * 100;  // 10^18
         do {
             tmp_obj.DivEq64(divbase, &tmp);
-            std::sprintf(buf, "%018lld", tmp);
+            std::sprintf(buf + 19, "%018lld", tmp);
             tmp_obj.DivEq64(divbase, &tmp);
-            std::sprintf(buf + 18, "%018lld", tmp);
-            rev_str.append(buf, 36);
+            std::sprintf(buf, "%018lld", tmp);
+            rev_str.append(buf, 18);
+            rev_str.append(buf + 19, 18);
         } while (tmp_obj);
         for (auto it = rev_str.end() - 36; it >= rev_str.begin(); it -= 36) {
             result.append(it, it + 36);

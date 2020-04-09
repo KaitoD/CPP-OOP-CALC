@@ -80,7 +80,7 @@ BigInt<uint128_t>::operator int64_t() const {
     if (Sign() != bool(r >> 63)) {
         r <<= 1;
         r >>= 1;
-        if (Sign()) r |= 0x8000000000000000ll;
+        if (Sign()) r |= int64_t(1) << 63;
     }
     return r;
 }
@@ -196,7 +196,8 @@ void BigInt<uint128_t>::Shrink() {
 }
 BigInt<uint128_t>& BigInt<uint128_t>::GenRandom(uint64_t length,
                                                 uint8_t fixed) {
-    SetLen(length, false);
+    if (!length) length = len_;
+    SetLen(length + 1, false);
     auto it = reinterpret_cast<uint64_t*>(val_);
     auto term = reinterpret_cast<uint64_t*>(val_ + length);
     do {
@@ -213,7 +214,7 @@ BigInt<uint128_t>& BigInt<uint128_t>::GenRandom(uint64_t length,
         ++mask;
         *(end_ - 1) |= mask;
     }
-    if (Sign()) SetLen(len_ + 1, false);
+    ShrinkLen();
     return *this;
 }
 double BigInt<uint128_t>::log2() const {

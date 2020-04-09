@@ -55,7 +55,7 @@ int BigInt<uint128_t>::Compare(const BigInt& rhs) const {
         auto term = rhs.val_ + len_;
         if (sign) {
             do
-                if (*(--cit) != -1) return 1;
+                if (*(--cit) != uint128_t(-1)) return 1;
             while (cit != term);
         } else {
             do
@@ -66,7 +66,7 @@ int BigInt<uint128_t>::Compare(const BigInt& rhs) const {
         auto term = val_ + rhs.len_;
         if (sign) {
             do
-                if (*(--it) != -1) return -1;
+                if (*(--it) != uint128_t(-1)) return -1;
             while (it != term);
         } else {
             do

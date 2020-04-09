@@ -55,6 +55,7 @@ class BigInt<uint128_t> {
     void Shrink();
     double log2() const;
     double log10() const;
+    uint64_t TrailingZero() const;
 
     // bigint64_bit.cpp
     BigInt& ToBitInv();
@@ -84,6 +85,8 @@ class BigInt<uint128_t> {
                std::FILE* f = stdout) const;
     friend std::ostream& operator<<(std::ostream& out,
                                     const BigInt<uint128_t>& rhs);
+    std::string ToString(int base = 10, int showbase = 1,
+                         bool uppercase = false) const;
 
     // bigint64_compare.cpp
 #ifdef __cpp_impl_three_way_comparison
@@ -93,7 +96,7 @@ class BigInt<uint128_t> {
 #endif
 
     // bigint64_div.cpp
-    // note this is not unsigned
+    // note this is not unsigned, to ensure the sign of remain is set correctly
     BigInt& DivEq64(int64_t rhs, int64_t* remain);
     BigInt& operator/=(int64_t rhs);
 
@@ -107,8 +110,7 @@ class BigInt<uint128_t> {
     BigInt& RFFTMulEq(const BigInt& rhs);
     BigInt& RMNTMulEq(const BigInt& rhs);
     BigInt& RFFTExtMulEq(const BigInt& rhs);
-    uint64_t TrailingZero() const;
-    BigInt& operator*=(int64_t rhs);
+    BigInt& operator*=(uint64_t rhs);
 };
 BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);

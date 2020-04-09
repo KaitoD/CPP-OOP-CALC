@@ -10,7 +10,10 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEq64(int64_t rhs, int64_t* remain) {
     asm("xorq %%rdx, %%rdx" : : : "cc");
 bi128_dVEy_loop:
     asm goto(R"(
-	leaq -8(%0), %0
+	leaq -16(%0), %0
+	movq 8(%0), %%rax
+	divq %1
+	movq %%rax, 8(%0)
 	movq (%0), %%rax
 	divq %1
 	movq %%rax, (%0)
@@ -20,7 +23,7 @@ bi128_dVEy_loop:
 )"
              :
              : "r"(it), "g"(rhs), "g"(val_), "m"(mod)
-             : "cc", "memory"
+             : "cc", "memory", "rax", "rdx"
              : bi128_dVEy_loop);
     if (sign != rhs_sign) ToOpposite();
     ShrinkLen();

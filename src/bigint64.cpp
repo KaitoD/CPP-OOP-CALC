@@ -3,5 +3,7 @@
 #include "bigint64_add.cpp"
 #include "bigint64_basic.cpp"
 #include "bigint64_bit.cpp"
+#include "bigint64_compare.cpp"
+#include "bigint64_div.cpp"
 #include "bigint64_io.cpp"
-namespace calc {}  // namespace calc
+#include "bigint64_mul.cpp"

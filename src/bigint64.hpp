@@ -12,6 +12,7 @@ class BigInt;
 
 typedef __uint128_t uint128_t;
 
+// Work fine on little-endian machine. On big-endian, reverse the whole vector.
 template <>
 class BigInt<uint128_t> {
     // data
@@ -19,7 +20,8 @@ class BigInt<uint128_t> {
     uint64_t len_ = 2;  // actual used length
     uint64_t cap_ = 4;  // capacity
     uint128_t* end_ = nullptr;
-    static constexpr uint64_t LIMB = sizeof(uint128_t) << 3;
+    static constexpr uint64_t LIMB = 128;
+    static constexpr uint64_t LOGLIMB = 7;
     static constexpr uint64_t MAX_CAP = uint64_t(1) << 63;
 
     // random device
@@ -31,10 +33,12 @@ class BigInt<uint128_t> {
     // NOLINTNEXTLINE: c++17 ok
     inline static std::uniform_int_distribution<uint64_t> rand_;
 
+    // bigint64_basic.cpp
     void ShrinkLen();
     void SetLen(uint64_t new_len, bool preserve_sign);
 
    public:
+    // bigint64_basic.cpp
     explicit BigInt(int value = 0);
     explicit BigInt(uint64_t value);
     BigInt(const BigInt& rhs);
@@ -42,32 +46,62 @@ class BigInt<uint128_t> {
     virtual ~BigInt();
     BigInt& operator=(const BigInt& rhs);
     BigInt& operator=(BigInt&& rhs) noexcept;
+    BigInt& GenRandom(uint64_t length, uint8_t fixed = 0);
+    explicit operator int64_t() const;
+    explicit operator bool() const;
     bool Sign() const;
     bool Parity() const;
+    const uint128_t* Data() const;
+    uint64_t Length() const;
+    // shrink size
+    void Shrink();
+
+    // bigint64_bit.cpp
     BigInt& ToBitInv();
     BigInt operator~() const;
-    BigInt& operator+=(uint64_t rhs);
-    BigInt& operator++();
-    BigInt operator++(int);
-    BigInt& operator-=(uint64_t rhs);
-    BigInt& operator--();
-    BigInt operator--(int);
-    void Print(int base = 10, int showbase = 1, bool uppercase = false,
-               std::FILE* f = stdout) const;
-    explicit operator bool() const;
-    BigInt& ToOpposite();
-    BigInt operator-() const;
     BigInt& operator&=(const BigInt& rhs);
     BigInt& operator|=(const BigInt& rhs);
     BigInt& operator^=(const BigInt& rhs);
-    BigInt& GenRandom(uint64_t length, uint8_t fixed = 0);
-    explicit operator int64_t() const;
+    BigInt& operator<<=(uint64_t rhs);
+    BigInt& operator>>=(uint64_t rhs);
+
+    // bigint64_add.cpp
+    BigInt& operator+=(uint64_t rhs);
     BigInt& operator+=(const BigInt& rhs);
+    BigInt& BiasedAddEq(const BigInt& rhs, uint64_t bias);
+    BigInt& operator++();
+    BigInt operator++(int);
+    BigInt& operator-=(uint64_t rhs);
     BigInt& operator-=(const BigInt& rhs);
+    BigInt& BiasedSubEq(const BigInt& rhs, uint64_t bias);
+    BigInt& operator--();
+    BigInt operator--(int);
+    BigInt& ToOpposite();
+    BigInt operator-() const;
+
+    // bigint64_io.cpp
+    void Print(int base = 10, int showbase = 1, bool uppercase = false,
+               std::FILE* f = stdout) const;
     friend std::ostream& operator<<(std::ostream& out,
                                     const BigInt<uint128_t>& rhs);
-    const uint128_t* Data() const;
-    uint64_t Length() const;
+    // TODO
+#ifdef __cpp_impl_three_way_comparison
+    std::weak_ordering operator<=>(const BigInt& rhs) const;
+#else
+    int Compare(const BigInt& rhs) const;
+#endif
+    double log2() const;
+    double log10() const;
+    template <typename T>
+    static void BitRevSort(T* a, size_t n);
+    // real transform
+    static void RFFT(double* dest, size_t n, bool inv);
+    static void RMNT(int64_t* dest, size_t n, bool inv);
+    static void RFFTExt(std::complex<long double>* dest, size_t n, bool inv);
+    BigInt& RFFTMulEq(const BigInt& rhs);
+    BigInt& RMNTMulEq(const BigInt& rhs);
+    BigInt& RFFTExtMulEq(const BigInt& rhs);
+    size_t TrailingZero() const;
 };
 BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);

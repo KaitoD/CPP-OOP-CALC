@@ -1,6 +1,5 @@
 #include <iomanip>
 
-#include "bigint64.cpp"
 #include "bigint64.hpp"
 namespace calc {
 void BigInt<uint128_t>::Print(int base, int showbase, bool uppercase,

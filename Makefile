@@ -172,9 +172,13 @@ compile/bigint_io_benchmark.o: src/bigint.hpp tests/bigint_io_benchmark.cpp
 	$(CXX) $(CXXFLAGS) -c tests/bigint_io_benchmark.cpp \
 		-o compile/bigint_io_benchmark.o
 
-bigint64_test: tests/bigint64_test.cpp src/bigint64_testoutput.cpp \
-	src/bigint64.hpp src/bigint64.cpp
-	$(CXX) $(CXXFLAGS) tests/bigint64_test.cpp -o bigint64_test
+compile/bigint64.o: src/bigint64.cpp src/bigint64.hpp src/bigint64_bit.cpp \
+	src/bigint64_io.cpp src/bigint64_add.cpp src/bigint64_basic.cpp \
+	$(CXX) $(CXXFLAGS) -c src/bigint64.cpp -o compile/bigint64.o
+
+bigint64_test: tests/bigint64_test.cpp \
+	src/bigint64.hpp compile/bigint64.o
+	$(CXX) $(CXXFLAGS) tests/bigint64_test.cpp compile/bigint64.o -o bigint64_test
 
 .PHONY: all clean clean-all
 clean:

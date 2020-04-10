@@ -188,4 +188,10 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator>>=(uint64_t rhs) {
     }
     return *this;
 }
+BigInt<uint128_t> operator<<(BigInt<uint128_t> lhs, uint64_t rhs) {
+    return lhs <<= rhs;
+}
+BigInt<uint128_t> operator>>(BigInt<uint128_t> lhs, uint64_t rhs) {
+    return lhs >>= rhs;
+}
 }  // namespace calc

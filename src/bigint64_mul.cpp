@@ -150,7 +150,8 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator*=(uint64_t rhs) {
     bool sign = Sign();
     if (sign) ToOpposite();
     BigInt<uint128_t> carry;
-    carry.SetLen(len_ + 1, true);
+    SetLen(len_ + 2, true);
+    carry.SetLen(len_ + 2, true);
     uint64_t* it = reinterpret_cast<uint64_t*>(val_);
     uint64_t* rit = reinterpret_cast<uint64_t*>(carry.val_) + 1;
     uint64_t* term = reinterpret_cast<uint64_t*>(end_);
@@ -419,5 +420,81 @@ void BigInt<uint128_t>::MNT(CompMp* dest, uint64_t n, bool inv) {
 }
 BigInt<uint128_t> BigInt<uint128_t>::MNTMul(BigInt lhs, const BigInt& rhs) {
     return lhs.MNTMulEq(rhs);
+}
+BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
+    // if (len_ <= 2 || rhs.len_ <= 2) return PlainMulEq(rhs);
+    if (len_ <= 4 || rhs.len_ <= 4) return RMNTMulEq(rhs);
+    if (rhs.Sign()) {
+        MulEqKaratsuba(-rhs);
+        ToOpposite();
+        return *this;
+    }
+    bool sign = Sign();
+    if (sign) ToOpposite();
+    size_t t = (std::max(rhs.len_, len_) + 1) >> 1;
+    BigInt<uint128_t> a, b, c, d, x, y, z;
+    if (t >= len_) {
+        b.SetLen(len_, false);
+        std::copy(val_, end_, b.val_);
+    } else {
+        b.SetLen(t + 1, false);
+        std::copy(val_, val_ + t, b.val_);
+        b.ShrinkLen();
+        a.SetLen(len_ - t, false);
+        std::copy(val_ + t, end_, a.val_);
+    }
+    if (t >= rhs.len_) {
+        d.SetLen(rhs.len_, false);
+        std::copy(rhs.val_, rhs.end_, d.val_);
+    } else {
+        d.SetLen(t + 1, false);
+        std::copy(rhs.val_, rhs.val_ + t, d.val_);
+        d.ShrinkLen();
+        c.SetLen(rhs.len_ - t, false);
+        std::copy(rhs.val_ + t, rhs.end_, c.val_);
+    }
+    if (t >= len_) {
+        d.MulEqKaratsuba(b);
+        c.MulEqKaratsuba(b);
+        // d *= b;
+        // c *= b;
+        *this = std::move(d);
+        BiasedAddEq(c, t);
+    } else if (t >= rhs.len_) {
+        a.MulEqKaratsuba(d);
+        b.MulEqKaratsuba(d);
+        // b *= d;
+        // a *= d;
+        *this = std::move(b);
+        BiasedAddEq(a, t);
+    } else {
+        x = a + b;
+        x.MulEqKaratsuba(c + d);
+        a.MulEqKaratsuba(c);
+        b.MulEqKaratsuba(d);
+        // x = (a + b) * (c + d);
+        // a *= c;
+        // b *= d;
+        x -= a;
+        x -= b;
+        *this = std::move(b);
+        BiasedAddEq(a, t + t);
+        BiasedAddEq(x, t);
+    }
+    if (sign) ToOpposite();
+    return *this;
+}
+BigInt<uint128_t>& BigInt<uint128_t>::PlainMulEq(const BigInt& rhs) {
+    return *this;
+}
+BigInt<uint128_t> BigInt<uint128_t>::PlainMul(BigInt lhs, const BigInt& rhs) {
+    return lhs.PlainMulEq(rhs);
+}
+BigInt<uint128_t> BigInt<uint128_t>::MulKaratsuba(BigInt lhs,
+                                                  const BigInt& rhs) {
+    return lhs.MulEqKaratsuba(rhs);
+}
+BigInt<uint128_t> operator*(BigInt<uint128_t> lhs, uint64_t rhs) {
+    return lhs *= rhs;
 }
 }  // namespace calc

@@ -34,6 +34,9 @@ class BigInt<uint128_t> {
     // NOLINTNEXTLINE: c++17 ok
     inline static std::uniform_int_distribution<uint64_t> rand_;
 
+    uint64_t DivDCore(const BigInt& rhs, uint64_t v1, uint64_t v2, uint64_t u1h,
+                      uint64_t u1l, uint64_t u2, uint64_t bias, bool half_more);
+
    public:
     // bigint64_basic.cpp
     explicit BigInt(int value = 0);
@@ -70,12 +73,14 @@ class BigInt<uint128_t> {
     // bigint64_add.cpp
     BigInt& operator+=(uint64_t rhs);
     BigInt& operator+=(const BigInt& rhs);
-    BigInt& BiasedAddEq(const BigInt& rhs, uint64_t bias);
+    BigInt& BiasedAddEq(const BigInt& rhs, uint64_t bias,
+                        bool half_more = false);
     BigInt& operator++();
     BigInt operator++(int);
     BigInt& operator-=(uint64_t rhs);
     BigInt& operator-=(const BigInt& rhs);
-    BigInt& BiasedSubEq(const BigInt& rhs, uint64_t bias);
+    BigInt& BiasedSubEq(const BigInt& rhs, uint64_t bias,
+                        bool half_more = false);
     BigInt& operator--();
     BigInt operator--(int);
     BigInt& ToOpposite();
@@ -97,7 +102,8 @@ class BigInt<uint128_t> {
 #endif
 
     // bigint64_div.cpp
-    // note this is not unsigned, to ensure the sign of remain is set correctly
+    // note this is not unsigned, to ensure the sign of remain is set
+    // correctly
     BigInt& DivEq64(int64_t rhs, int64_t* remain);
     BigInt& operator/=(int64_t rhs);
 
@@ -111,14 +117,15 @@ class BigInt<uint128_t> {
     static void MNT(CompMp* dest, uint64_t n, bool inv);
     BigInt& MNTMulEq(const BigInt& rhs);
     static BigInt MNTMul(BigInt lhs, const BigInt& rhs);
+    BigInt& MulEqKaratsuba(const BigInt& rhs);
+    static BigInt MulKaratsuba(BigInt lhs, const BigInt& rhs);
 
     // TODO
-    // real transform
-    static void RFFT(double* dest, uint64_t n, bool inv);
-    static void RFFTExt(std::complex<long double>* dest, uint64_t n, bool inv);
-    BigInt& RFFTMulEq(const BigInt& rhs);
-    BigInt& RFFTExtMulEq(const BigInt& rhs);
     BigInt& operator*=(const BigInt& rhs);
+    BigInt& PlainMulEq(const BigInt& rhs);
+    static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
+    BigInt& DivEqD(const BigInt& rhs, BigInt* mod);
+    static BigInt DivD(BigInt lhs, const BigInt& rhs, BigInt* mod);
 };
 BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
@@ -126,9 +133,21 @@ BigInt<uint128_t> operator|(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
 BigInt<uint128_t> operator^(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
+BigInt<uint128_t> operator<<(BigInt<uint128_t> lhs, uint64_t rhs);
+BigInt<uint128_t> operator>>(BigInt<uint128_t> lhs, uint64_t rhs);
 BigInt<uint128_t> operator+(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
 BigInt<uint128_t> operator-(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
 std::ostream& operator<<(std::ostream& out, const BigInt<uint128_t>& rhs);
+BigInt<uint128_t> operator*(BigInt<uint128_t> lhs, uint64_t rhs);
+BigInt<uint128_t> operator/(BigInt<uint128_t> lhs, int64_t rhs);
+#ifndef __cpp_impl_three_way_comparison
+bool operator<(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
+bool operator>(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
+bool operator<=(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
+bool operator>=(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
+bool operator==(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
+bool operator!=(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
+#endif
 }  // namespace calc

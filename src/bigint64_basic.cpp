@@ -210,9 +210,9 @@ BigInt<uint128_t>& BigInt<uint128_t>::GenRandom(uint64_t length,
         uint128_t mask = 1;
         mask <<= fixed - 1;
         --mask;
-        *(end_ - 1) &= mask;
+        val_[length - 1] &= mask;
         ++mask;
-        *(end_ - 1) |= mask;
+        val_[length - 1] |= mask;
     }
     ShrinkLen();
     return *this;

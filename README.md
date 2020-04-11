@@ -13,5 +13,6 @@
   Add a divide-and-conquer division algorithm.
 - 2020/4/3 Add prime generation.
 - 2020/4/8 Add branch 'performance': try to improve performance.
+- 2020/4/11 'performance' has great progress now, merge into master.
 
 [doc.md]: doc.md

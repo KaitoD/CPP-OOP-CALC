@@ -74,15 +74,55 @@ int main() {
     start_time = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < test_count; ++i) {
         a.GenRandom(ran(ran_eng) & mask);
-        // b.GenRandom(ran(ran_eng) & mask);
-        res ^= a.MulKaratsuba(a, a);
-        // res ^= a.MulKaratsuba(a, b);
-        // tot_len += std::max(a.Length(), b.Length());
-        tot_len += a.Length();
+        b.GenRandom(ran(ran_eng) & mask);
+        res ^= a.RMNTMulUB(a, b);
+        tot_len += std::max(a.Length(), b.Length());
     }
     end_time = std::chrono::high_resolution_clock::now();
     duration = (end_time - start_time) - rand_dur * tot_len;
-    std::printf("Tested Karatsuba multiplication");
+    std::printf("Tested RMNT unbalanced multiplication");
+    std::printf(" on %d samples. Total length is %llu.\n", test_count, tot_len);
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    std::printf("Execution time per limb*operation is %.3lfus.\n",
+                duration.count() / 1e3 / tot_len);
+    std::cout << std::dec << (res & and_val)
+              << "(prevent optimizing out the whole loop)" << std::endl;
+    std::cout << std::endl;
+    tot_len = 0;
+    test_count = 16;
+    a.Shrink();
+    b.Shrink();
+    start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_count; ++i) {
+        a.GenRandom(ran(ran_eng) & mask);
+        b.GenRandom(ran(ran_eng) & mask);
+        res ^= a * b;
+        tot_len += std::max(a.Length(), b.Length());
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = (end_time - start_time) - rand_dur * tot_len;
+    std::printf("Tested auto distribute multiplication");
+    std::printf(" on %d samples. Total length is %llu.\n", test_count, tot_len);
+    std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
+    std::printf("Execution time per limb*operation is %.3lfus.\n",
+                duration.count() / 1e3 / tot_len);
+    std::cout << std::dec << (res & and_val)
+              << "(prevent optimizing out the whole loop)" << std::endl;
+    std::cout << std::endl;
+    tot_len = 0;
+    test_count = 16;
+    a.Shrink();
+    b.Shrink();
+    start_time = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_count; ++i) {
+        a.GenRandom(ran(ran_eng) & mask);
+        b.GenRandom(ran(ran_eng) & mask);
+        res ^= a.Square(a);
+        tot_len += std::max(a.Length(), b.Length());
+    }
+    end_time = std::chrono::high_resolution_clock::now();
+    duration = (end_time - start_time) - rand_dur * tot_len;
+    std::printf("Tested square (RMNT)");
     std::printf(" on %d samples. Total length is %llu.\n", test_count, tot_len);
     std::printf("Total time is %.3lfms.\n", duration.count() / 1e6);
     std::printf("Execution time per limb*operation is %.3lfus.\n",

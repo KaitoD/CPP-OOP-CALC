@@ -150,28 +150,27 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator*=(uint64_t rhs) {
     bool sign = Sign();
     if (sign) ToOpposite();
     BigInt<uint128_t> carry;
-    SetLen(len_ + 2, true);
-    carry.SetLen(len_ + 2, true);
-    uint64_t* it = reinterpret_cast<uint64_t*>(val_);
-    uint64_t* rit = reinterpret_cast<uint64_t*>(carry.val_) + 1;
-    uint64_t* term = reinterpret_cast<uint64_t*>(end_);
+    carry.SetLen(len_ + 2, false);
+    uint128_t* it = val_;
+    uint128_t* rit = carry.val_;
     do {
         asm(R"(
 	movq (%0), %%rax
 	mulq %2
 	movq %%rax, (%0)
-	movq %%rdx, (%1)
+	movq %%rdx, 8(%1)
 	movq 8(%0), %%rax
 	mulq %2
 	movq %%rax, 8(%0)
-	movq %%rdx, 8(%1)
+	movq %%rdx, 16(%1)
 )"
-            :
-            : "r"(it), "r"(rit), "g"(rhs)
+            : "+r"(it), "+r"(rit)
+            : "g"(rhs)
             : "cc", "memory", "rax", "rdx");
-        it += 2;
-        rit += 2;
-    } while (it != term);
+        ++it;
+        ++rit;
+    } while (it < end_);
+    SetLen(len_ + 2, false);
     *this += carry;
     if (sign) ToOpposite();
     ShrinkLen();
@@ -331,9 +330,6 @@ void BigInt<uint128_t>::RMNT(int64_t* dest, uint64_t n, bool inv) {
     if (inv)
         for (i = 0; i < n; ++i) dest[i] = T::ModMp(int128_t(dest[i]) << mov);
 }
-BigInt<uint128_t> BigInt<uint128_t>::RMNTMul(BigInt lhs, const BigInt& rhs) {
-    return lhs.RMNTMulEq(rhs);
-}
 BigInt<uint128_t>& BigInt<uint128_t>::MNTMulEq(const BigInt& rhs) {
     if (rhs.Sign()) {
         MNTMulEq(-rhs);
@@ -418,9 +414,6 @@ void BigInt<uint128_t>::MNT(CompMp* dest, uint64_t n, bool inv) {
     if (inv)
         for (i = 0; i < n; ++i) dest[i] *= mov;
 }
-BigInt<uint128_t> BigInt<uint128_t>::MNTMul(BigInt lhs, const BigInt& rhs) {
-    return lhs.MNTMulEq(rhs);
-}
 BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
     // if (len_ <= 2 || rhs.len_ <= 2) return PlainMulEq(rhs);
     if (len_ <= 4 || rhs.len_ <= 4) return RMNTMulEq(rhs);
@@ -485,16 +478,232 @@ BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
     return *this;
 }
 BigInt<uint128_t>& BigInt<uint128_t>::PlainMulEq(const BigInt& rhs) {
+    if (rhs.Sign()) {
+        PlainMulEq(-rhs);
+        return ToOpposite();
+    }
+    bool sign = Sign();
+    if (sign) ToOpposite();
+    BigInt<uint128_t> save_this = std::move(*this);
+    auto cit = reinterpret_cast<uint64_t*>(rhs.val_);
+    uint64_t i = 0;
+    auto cterm = reinterpret_cast<uint64_t*>(rhs.end_);
+    if (!*(rhs.end_ - 1)) cterm -= 2;
+    *this = BigInt<uint128_t>(0);
+    do {
+        BiasedAddEq(save_this * (*cit), i, false);
+        ++cit;
+        BiasedAddEq(save_this * (*cit), i, true);
+        ++cit;
+        ++i;
+    } while (cit < cterm);
+    if (sign) ToOpposite();
+    ShrinkLen();
     return *this;
 }
-BigInt<uint128_t> BigInt<uint128_t>::PlainMul(BigInt lhs, const BigInt& rhs) {
-    return lhs.PlainMulEq(rhs);
+BigInt<uint128_t>& BigInt<uint128_t>::operator*=(const BigInt& rhs) {
+    if (rhs.len_ <= 2 || len_ <= 2) {
+        return PlainMulEq(rhs);
+    } else if ((len_ << 2) < rhs.len_ || (rhs.len_ << 2) < len_) {
+        return RMNTMulEqUB(rhs);
+    } else {
+        return RMNTMulEq(rhs);
+    }
 }
-BigInt<uint128_t> BigInt<uint128_t>::MulKaratsuba(BigInt lhs,
-                                                  const BigInt& rhs) {
-    return lhs.MulEqKaratsuba(rhs);
+BigInt<uint128_t>& BigInt<uint128_t>::SquareEq() {
+    // specialized version of RMNTMulEq
+    if (Sign()) ToOpposite();
+    int64_t* v;
+    uint64_t n = 1;
+    auto it = reinterpret_cast<uint16_t*>(val_);
+    auto term = reinterpret_cast<uint16_t*>(end_);
+    while (n < len_) n <<= 1;
+    n <<= 4;
+    v = new int64_t[n];
+    auto vit = v;
+    for (; it < term; vit += 8, it += 8) {
+        for (int j = 0; j < 8; j += 2) {
+            *(vit + j) = *(it + j);
+            *(vit + j + 1) = *(it + j + 1);
+        }
+    }
+    std::fill(vit, v + n, 0);
+    RMNT(v, n, false);
+    int64_t t1, t2, t3, t4;
+    uint64_t n2 = n >> 1;
+    v[0] = CompMp::ModMp(int128_t(v[0]) * v[0]);
+    v[n2] = CompMp::ModMp(int128_t(v[n2]) * v[n2]);
+    for (uint64_t i = 1; i < n2; ++i) {
+        t1 = CompMp::ModMp(int128_t(v[i]) * v[i]);
+        t2 = CompMp::ModMp(int128_t(v[n - i]) * v[n - i]);
+        t3 = CompMp::ModMp(int128_t(v[i]) * v[n - i]);
+        t1 = CompMp::ModMp(int128_t(t1 - t2) << (CompMp::P - 1));
+        t4 = t3 + t1;
+        v[i] = (t4 & CompMp::MP) + (t4 >> CompMp::P);
+        t4 = t3 - t1;
+        v[n - i] = (t4 & CompMp::MP) + (t4 >> CompMp::P);
+    }
+    RMNT(v, n, true);
+    SetLen(len_ + len_ + 1, true);
+    it = reinterpret_cast<uint16_t*>(val_);
+    term = reinterpret_cast<uint16_t*>(end_ - 1);
+    vit = v;
+    uint64_t tmp = 0;
+    for (; it != term; it += 8, vit += 8) {
+        for (int j = 0; j < 8; j += 2) {
+            if (*(vit + j) >= CompMp::MP) *(vit + j) -= CompMp::MP;
+            tmp = (tmp >> 16) + uint64_t(*(vit + j));
+            *(it + j) = uint16_t(tmp);
+            if (*(vit + j + 1) >= CompMp::MP) *(vit + j + 1) -= CompMp::MP;
+            tmp = (tmp >> 16) + uint64_t(*(vit + j + 1));
+            *(it + j + 1) = uint16_t(tmp);
+        }
+    }
+    ShrinkLen();
+    delete[] v;
+    return *this;
 }
-BigInt<uint128_t> operator*(BigInt<uint128_t> lhs, uint64_t rhs) {
-    return lhs *= rhs;
+BigInt<uint128_t>& BigInt<uint128_t>::RMNTMulEqGiven(const int64_t* src,
+                                                     uint64_t n,
+                                                     uint64_t rlen) {
+    // require len_ <= (length of the pre-converted number)
+    bool sign = Sign();
+    if (sign) ToOpposite();
+    int64_t* v = new int64_t[n];
+    auto it = reinterpret_cast<uint16_t*>(val_);
+    auto term = reinterpret_cast<uint16_t*>(end_);
+    auto vit = v;
+    for (; it < term; vit += 8, it += 8) {
+        for (int j = 0; j < 8; j += 2) {
+            *(vit + j) = *(it + j);
+            *(vit + j + 1) = *(it + j + 1);
+        }
+    }
+    std::fill(vit, v + n, 0);
+    RMNT(v, n, false);
+    int64_t t1, t2, t3, t4;
+    uint64_t n2 = n >> 1;
+    v[0] = CompMp::ModMp(int128_t(v[0]) * src[0]);
+    v[n2] = CompMp::ModMp(int128_t(v[n2]) * src[n2]);
+    for (uint64_t i = 1; i < n2; ++i) {
+        t1 = v[i];
+        t2 = v[n - i];
+        t3 = CompMp::ModMp(int128_t(src[i] + src[n - i]) << (CompMp::P - 1));
+        t4 = t3 - src[i];
+        t4 = (t4 & CompMp::MP) + (t4 >> CompMp::P);
+        v[i] = CompMp::ModMp(int128_t(t1) * t3 - int128_t(t2) * t4);
+        v[n - i] = CompMp::ModMp(int128_t(t2) * t3 + int128_t(t1) * t4);
+    }
+    RMNT(v, n, true);
+    SetLen(len_ + rlen + 1, true);
+    it = reinterpret_cast<uint16_t*>(val_);
+    term = reinterpret_cast<uint16_t*>(end_ - 1);
+    vit = v;
+    uint64_t tmp = 0;
+    for (; it < term; it += 8, vit += 8) {
+        for (int j = 0; j < 8; j += 2) {
+            if (*(vit + j) >= CompMp::MP) *(vit + j) -= CompMp::MP;
+            tmp = (tmp >> 16) + uint64_t(*(vit + j));
+            *(it + j) = uint16_t(tmp);
+            if (*(vit + j + 1) >= CompMp::MP) *(vit + j + 1) -= CompMp::MP;
+            tmp = (tmp >> 16) + uint64_t(*(vit + j + 1));
+            *(it + j + 1) = uint16_t(tmp);
+        }
+    }
+    if (sign) ToOpposite();
+    ShrinkLen();
+    delete[] v;
+    return *this;
+}
+BigInt<uint128_t>& BigInt<uint128_t>::RMNTMulEqUB(const BigInt& rhs) {
+    // reinterpret as uint16
+    if (rhs.Sign()) {
+        RMNTMulEqUB(-rhs);
+        return ToOpposite();
+    }
+    bool sign = Sign();
+    if (sign) ToOpposite();
+    int64_t* v;
+    uint64_t n = 1;
+    uint64_t k, i;
+    BigInt<uint128_t> tmp_obj;
+    if (len_ > rhs.len_) {
+        auto cit = reinterpret_cast<uint16_t*>(rhs.val_);
+        auto cterm = reinterpret_cast<uint16_t*>(rhs.end_);
+        while (n <= rhs.len_) n <<= 1;
+        n <<= 4;
+        k = (len_ + rhs.len_ - 1) / rhs.len_;
+        v = new int64_t[n];
+        auto vit = v;
+        for (; cit < cterm; vit += 8, cit += 8) {
+            for (int j = 0; j < 8; j += 2) {
+                *(vit + j) = *(cit + j);
+                *(vit + j + 1) = *(cit + j + 1);
+            }
+        }
+        std::fill(vit, v + n, 0);
+        RMNT(v, n, false);
+        BigInt<uint128_t> save_this = std::move(*this);
+        auto sit = save_this.val_;
+        auto sterm = save_this.end_;
+        *this = BigInt<uint128_t>(0);
+        for (i = 0; i < k - 1; ++i) {
+            tmp_obj.SetLen(rhs.len_ + 1, false);
+            *(tmp_obj.end_ - 1) = 0;
+            std::copy(sit, sit + rhs.len_, tmp_obj.val_);
+            sit += rhs.len_;
+            tmp_obj.ShrinkLen();
+            tmp_obj.RMNTMulEqGiven(v, n, rhs.len_);
+            BiasedAddEq(tmp_obj, i * rhs.len_, false);
+        }
+        tmp_obj = BigInt<uint128_t>(0);
+        tmp_obj.SetLen(sterm - sit + 1, false);
+        *(tmp_obj.end_ - 1) = 0;
+        std::copy(sit, sterm, tmp_obj.val_);
+        tmp_obj.ShrinkLen();
+        tmp_obj.RMNTMulEqGiven(v, n, rhs.len_);
+        BiasedAddEq(tmp_obj, i * rhs.len_, false);
+        delete[] v;
+    } else {
+        auto it = reinterpret_cast<uint16_t*>(val_);
+        auto term = reinterpret_cast<uint16_t*>(end_);
+        auto this_len = len_;
+        while (n <= this_len) n <<= 1;
+        n <<= 4;
+        k = (rhs.len_ + this_len - 1) / this_len;
+        v = new int64_t[n];
+        auto vit = v;
+        for (; it < term; vit += 8, it += 8) {
+            for (int j = 0; j < 8; j += 2) {
+                *(vit + j) = *(it + j);
+                *(vit + j + 1) = *(it + j + 1);
+            }
+        }
+        std::fill(vit, v + n, 0);
+        RMNT(v, n, false);
+        *this = BigInt<uint128_t>(0);
+        auto cit = rhs.val_;
+        auto cterm = rhs.end_;
+        for (i = 0; i < k - 1; ++i) {
+            tmp_obj.SetLen(this_len + 1, false);
+            *(tmp_obj.end_ - 1) = 0;
+            std::copy(cit, cit + this_len, tmp_obj.val_);
+            cit += this_len;
+            tmp_obj.ShrinkLen();
+            tmp_obj.RMNTMulEqGiven(v, n, this_len);
+            BiasedAddEq(tmp_obj, i * this_len, false);
+        }
+        tmp_obj = BigInt<uint128_t>(0);
+        tmp_obj.SetLen(cterm - cit + 1, false);
+        *(tmp_obj.end_ - 1) = 0;
+        std::copy(cit, cterm, tmp_obj.val_);
+        tmp_obj.ShrinkLen();
+        tmp_obj.RMNTMulEqGiven(v, n, this_len);
+        BiasedAddEq(tmp_obj, i * this_len, false);
+        delete[] v;
+    }
+    if (sign) ToOpposite();
+    ShrinkLen();
+    return *this;
 }
 }  // namespace calc

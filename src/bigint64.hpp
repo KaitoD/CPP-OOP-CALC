@@ -6,6 +6,7 @@
 #include <random>
 #include <utility>
 namespace calc {
+// complex (mod Mersenne Prime)
 class CompMp;
 template <typename IntT>
 class BigInt;
@@ -13,7 +14,10 @@ class BigInt;
 typedef __uint128_t uint128_t;
 typedef __int128_t int128_t;
 
-// Work fine on little-endian machine. On big-endian, reverse the whole vector.
+// Work fine on little-endian machine.
+// Big-endian can be done by reversing the whole vector
+// and doing everything in reversed order,
+// so it will not be considered in the code.
 template <>
 class BigInt<uint128_t> {
     // data
@@ -34,8 +38,12 @@ class BigInt<uint128_t> {
     // NOLINTNEXTLINE: c++17 ok
     inline static std::uniform_int_distribution<uint64_t> rand_;
 
+    // bigint64_div.cpp
     uint64_t DivDCore(const BigInt& rhs, uint64_t v1, uint64_t v2, uint64_t u1h,
                       uint64_t u1l, uint64_t u2, uint64_t bias, bool half_more);
+
+    // bigint64_mul.cpp
+    BigInt& RMNTMulEqGiven(const int64_t* src, uint64_t n, uint64_t rlen);
 
    public:
     // bigint64_basic.cpp
@@ -85,6 +93,7 @@ class BigInt<uint128_t> {
     BigInt operator--(int);
     BigInt& ToOpposite();
     BigInt operator-() const;
+    BigInt& ToAbsolute();
 
     // bigint64_io.cpp
     void Print(int base = 10, int showbase = 1, bool uppercase = false,
@@ -93,6 +102,8 @@ class BigInt<uint128_t> {
                                     const BigInt<uint128_t>& rhs);
     std::string ToString(int base = 10, int showbase = 1,
                          bool uppercase = false) const;
+    explicit BigInt(const char* str, size_t base = 0);
+    explicit BigInt(const std::string& str, size_t base = 0);
 
     // bigint64_compare.cpp
 #ifdef __cpp_impl_three_way_comparison
@@ -104,8 +115,13 @@ class BigInt<uint128_t> {
     // bigint64_div.cpp
     // note this is not unsigned, to ensure the sign of remain is set
     // correctly
-    BigInt& DivEq64(int64_t rhs, int64_t* remain);
+    BigInt& DivEq64(int64_t rhs, int64_t* remain = nullptr);
     BigInt& operator/=(int64_t rhs);
+    BigInt& operator%=(int64_t rhs);
+    BigInt& DivEqD(const BigInt& rhs, BigInt* mod = nullptr);
+    BigInt& operator/=(const BigInt& rhs);
+    BigInt& operator%=(const BigInt& rhs);
+    BigInt& DivEq(const BigInt& rhs, BigInt* mod = nullptr);
 
     // bigint64_mul.cpp
     BigInt& operator*=(uint64_t rhs);
@@ -113,20 +129,47 @@ class BigInt<uint128_t> {
     static void BitRevSort(T* a, uint64_t n);
     static void RMNT(int64_t* dest, uint64_t n, bool inv);
     BigInt& RMNTMulEq(const BigInt& rhs);
-    static BigInt RMNTMul(BigInt lhs, const BigInt& rhs);
     static void MNT(CompMp* dest, uint64_t n, bool inv);
     BigInt& MNTMulEq(const BigInt& rhs);
-    static BigInt MNTMul(BigInt lhs, const BigInt& rhs);
     BigInt& MulEqKaratsuba(const BigInt& rhs);
-    static BigInt MulKaratsuba(BigInt lhs, const BigInt& rhs);
-
-    // TODO
     BigInt& operator*=(const BigInt& rhs);
+    BigInt& SquareEq();
+    BigInt& RMNTMulEqUB(const BigInt& rhs);
     BigInt& PlainMulEq(const BigInt& rhs);
+
+    // bigint64_ext.cpp
+    bool isProbablePrime() const;
+    BigInt& ToNextPrime();
+    friend BigInt PowMod(const BigInt& a, uint64_t p, const BigInt& n);
+    friend BigInt PowMod(const BigInt& a, const BigInt& p, const BigInt& n);
+
+    // bigint64.cpp
+    static BigInt RMNTMul(BigInt lhs, const BigInt& rhs);
+    static BigInt MNTMul(BigInt lhs, const BigInt& rhs);
+    static BigInt MulKaratsuba(BigInt lhs, const BigInt& rhs);
     static BigInt PlainMul(BigInt lhs, const BigInt& rhs);
-    BigInt& DivEqD(const BigInt& rhs, BigInt* mod);
-    static BigInt DivD(BigInt lhs, const BigInt& rhs, BigInt* mod);
+    static BigInt DivD(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
+    static BigInt Div(BigInt lhs, const BigInt& rhs, BigInt* mod = nullptr);
+    static BigInt Square(BigInt lhs);
+    static BigInt RMNTMulUB(BigInt lhs, const BigInt& rhs);
 };
+// bigint64_io.cpp
+std::ostream& operator<<(std::ostream& out, const BigInt<uint128_t>& rhs);
+std::istream& operator>>(std::istream& in, BigInt<uint128_t>& rhs);
+
+// bigint64_ext.cpp
+BigInt<uint128_t> BigProduct(uint64_t a, uint64_t b);
+BigInt<uint128_t> Factorial(uint64_t n);
+BigInt<uint128_t> Power(const BigInt<uint128_t>& a, uint64_t p);
+BigInt<uint128_t> PowMod(const BigInt<uint128_t>& a, uint64_t p,
+                         const BigInt<uint128_t>& n);
+BigInt<uint128_t> PowMod(const BigInt<uint128_t>& a, const BigInt<uint128_t>& p,
+                         const BigInt<uint128_t>& n);
+BigInt<uint128_t> GcdBin(BigInt<uint128_t> a, BigInt<uint128_t> b);
+BigInt<uint128_t> ExtGcdBin(BigInt<uint128_t> a, BigInt<uint128_t> b,
+                            BigInt<uint128_t>* x, BigInt<uint128_t>* y);
+
+// bigint64.cpp
 BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
 BigInt<uint128_t> operator|(BigInt<uint128_t> lhs,
@@ -135,13 +178,21 @@ BigInt<uint128_t> operator^(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
 BigInt<uint128_t> operator<<(BigInt<uint128_t> lhs, uint64_t rhs);
 BigInt<uint128_t> operator>>(BigInt<uint128_t> lhs, uint64_t rhs);
+BigInt<uint128_t> operator+(BigInt<uint128_t> lhs, uint64_t rhs);
 BigInt<uint128_t> operator+(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
+BigInt<uint128_t> operator-(BigInt<uint128_t> lhs, uint64_t rhs);
 BigInt<uint128_t> operator-(BigInt<uint128_t> lhs,
                             const BigInt<uint128_t>& rhs);
-std::ostream& operator<<(std::ostream& out, const BigInt<uint128_t>& rhs);
 BigInt<uint128_t> operator*(BigInt<uint128_t> lhs, uint64_t rhs);
+BigInt<uint128_t> operator*(BigInt<uint128_t> lhs,
+                            const BigInt<uint128_t>& rhs);
 BigInt<uint128_t> operator/(BigInt<uint128_t> lhs, int64_t rhs);
+BigInt<uint128_t> operator/(BigInt<uint128_t> lhs,
+                            const BigInt<uint128_t>& rhs);
+int64_t operator%(BigInt<uint128_t> lhs, int64_t rhs);
+BigInt<uint128_t> operator%(BigInt<uint128_t> lhs,
+                            const BigInt<uint128_t>& rhs);
 #ifndef __cpp_impl_three_way_comparison
 bool operator<(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);
 bool operator>(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs);

@@ -17,6 +17,18 @@ void do_test(const BI& a, const BI& b) {
               << std::endl;
     std::cout << "print(" << a << " * " << b << " == " << a.RMNTMul(a, b) << ")"
               << std::endl;
+    std::cout << "print(" << b << " * " << a << " == " << a.MNTMul(b, a) << ")"
+              << std::endl;
+    std::cout << "print(" << b << " * " << a << " == " << a.RMNTMul(b, a) << ")"
+              << std::endl;
+    std::cout << "print(" << a << " * " << a << " == " << a.Square(a) << ")"
+              << std::endl;
+    std::cout << "print(" << b << " * " << b << " == " << a.Square(b) << ")"
+              << std::endl;
+    std::cout << "print(" << a << " * " << b << " == " << a.RMNTMulUB(a, b)
+              << ")" << std::endl;
+    std::cout << "print(" << b << " * " << a << " == " << a.RMNTMulUB(b, a)
+              << ")" << std::endl;
     std::cout << std::endl;
     std::cout << "print(" << std::hex << std::showbase << a
               << " == " << std::dec << a << ")" << std::endl;
@@ -25,6 +37,10 @@ void do_test(const BI& a, const BI& b) {
     std::cout << std::endl;
     BI c;
     std::cout << std::hex << std::showbase;
+    if (a.Sign() == b.Sign()) {
+        std::cout << "print(" << a << " // " << b << " == " << a.DivD(a, b, &c)
+                  << ")" << std::endl;
+    }
     std::cout << "print(" << a << " == " << b << " * " << a.DivD(a, b, &c);
     std::cout << " + " << c << ")" << std::endl;
 }

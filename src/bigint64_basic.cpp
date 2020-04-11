@@ -198,21 +198,20 @@ BigInt<uint128_t>& BigInt<uint128_t>::GenRandom(uint64_t length,
                                                 uint8_t fixed) {
     if (!length) length = len_;
     SetLen(length + 1, false);
-    auto it = reinterpret_cast<uint64_t*>(val_);
-    auto term = reinterpret_cast<uint64_t*>(val_ + length);
+    auto it = val_, term = val_ + length;
     do {
-        *it = rand_(rand_gen_);
-        ++it;
-        *it = rand_(rand_gen_);
+        *it = (uint128_t(rand_(rand_gen_)) << 64) | rand_(rand_gen_);
         ++it;
     } while (it != term);
+    *it = 0;
     if (fixed) {
+        --it;
         uint128_t mask = 1;
         mask <<= fixed - 1;
         --mask;
-        val_[length - 1] &= mask;
+        *it &= mask;
         ++mask;
-        val_[length - 1] |= mask;
+        *it |= mask;
     }
     ShrinkLen();
     return *this;

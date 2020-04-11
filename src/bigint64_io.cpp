@@ -208,8 +208,8 @@ std::string BigInt<uint128_t>::ToString(int base, int showbase,
             result.erase(0, result.find_first_not_of('0', 0));
     } else if (base == 10) {
         auto tmp_obj = *this;
-        int64_t tmp, divbase = 100000000;
-        divbase = divbase * divbase * 100;  // 10^18
+        int64_t tmp, divbase = 1000000000;
+        divbase *= divbase;  // 10^18
         do {
             tmp_obj.DivEq64(divbase, &tmp);
             std::sprintf(buf + 19, "%018lld", tmp);
@@ -289,5 +289,144 @@ std::string BigInt<uint128_t>::ToString(int base, int showbase,
         result += buf;
     }
     return result;
+}
+BigInt<uint128_t>::BigInt(const std::string& str, size_t base)
+    : BigInt(str.c_str(), base) {}
+BigInt<uint128_t>::BigInt(const char* str, size_t base) : BigInt(0) {
+    const uint64_t decode[75] = {
+        0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  64, 64, 64, 64, 64,
+        64, 64, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+        23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 64, 64,
+        64, 64, 64, 64, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35};
+    bool bNegative = false;
+    uint64_t p = 0;
+    if (str[p] == '-') {
+        ++p;
+        bNegative = true;
+    } else if (str[p] == '+') {
+        ++p;
+    }
+    if (str[p] == '0') {
+        if ((base == 0 || base == 2) &&
+            (str[p + 1] == 'B' || str[p + 1] == 'b')) {
+            base = 2;
+            p += 2;
+        } else if ((base == 0 || base == 16) &&
+                   (str[p + 1] == 'X' || str[p + 1] == 'x')) {
+            base = 16;
+            p += 2;
+        } else if (base == 0 || base == 8) {
+            base = 8;
+            ++p;
+        }
+    }
+    if (base > 36 || base < 2) base = 10;
+    uint64_t buf = 0, t = 0, basebound = base;
+    int i = 0;
+    if (base == 16) {
+        while (std::isxdigit(str[p])) {
+            buf = (buf << 4) | decode[int(str[p] - '0')];
+            ++p;
+            i += 4;
+            if (i >= 64) {
+                *this <<= 64;
+                *this += buf;
+                buf = 0;
+                i = 0;
+            }
+        }
+        if (i) {
+            *this <<= i;
+            *this += buf;
+        }
+    } else if (base == 8) {
+        while (std::isdigit(str[p]) && (t = str[p] - '0') < base) {
+            buf = (buf << 3) | t;
+            ++p;
+            i += 3;
+            if (i >= 63) {
+                *this <<= 63;
+                *this += buf;
+                buf = 0;
+                i = 0;
+            }
+        }
+        if (i) {
+            *this <<= i;
+            *this += buf;
+        }
+    } else if (base == 10) {
+        basebound = 1000000000;
+        basebound *= basebound;  // 10^18
+        while (std::isdigit(str[p])) {
+            buf = buf * base + (str[p] - '0');
+            ++p;
+            ++i;
+            if (i >= 18) {
+                *this *= basebound;
+                *this += buf;
+                buf = 0;
+                i = 0;
+            }
+        }
+        if (i) {
+            basebound = base;
+            while (--i) basebound *= base;
+            *this *= basebound;
+            *this += buf;
+        }
+    } else if (base == 2) {
+        while (str[p] == '0' || str[p] == '1') {
+            buf = (buf << 1) | (str[p] == '1');
+            ++p;
+            ++i;
+            if (i >= 64) {
+                *this <<= 64;
+                *this += buf;
+                buf = 0;
+                i = 0;
+            }
+        }
+        if (i) {
+            *this <<= i;
+            *this += buf;
+        }
+    } else {
+        basebound = base * base * base;
+        basebound *= basebound;
+        basebound *= basebound;  // base^12
+        while (std::isalnum(str[p]) && (t = decode[str[p] - '0']) < base) {
+            buf = buf * base + t;
+            ++p;
+            ++i;
+            if (i >= 12) {
+                *this *= basebound;
+                *this += buf;
+                buf = 0;
+                i = 0;
+            }
+        }
+        if (i) {
+            basebound = base;
+            while (--i) basebound *= base;
+            *this *= basebound;
+            *this += buf;
+        }
+    }
+    if (bNegative) ToOpposite();
+}
+std::istream& operator>>(std::istream& in, BigInt<uint128_t>& rhs) {
+    std::string str;
+    in >> str;
+    if (in.flags() & in.hex) {
+        rhs = BigInt<uint128_t>(str.c_str(), 16);
+    } else if (in.flags() & in.oct) {
+        rhs = BigInt<uint128_t>(str.c_str(), 8);
+    } else {
+        // auto-detect
+        rhs = BigInt<uint128_t>(str.c_str(), 0);
+    }
+    return in;
 }
 }  // namespace calc

@@ -84,23 +84,5 @@ int BigInt<uint128_t>::Compare(const BigInt& rhs) const {
     while (it != val_);
     return 0;
 }
-bool operator<(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs) {
-    return lhs.Compare(rhs) < 0;
-}
-bool operator>(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs) {
-    return lhs.Compare(rhs) > 0;
-}
-bool operator<=(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs) {
-    return lhs.Compare(rhs) <= 0;
-}
-bool operator>=(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs) {
-    return lhs.Compare(rhs) >= 0;
-}
-bool operator==(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs) {
-    return lhs.Compare(rhs) == 0;
-}
-bool operator!=(const BigInt<uint128_t>& lhs, const BigInt<uint128_t>& rhs) {
-    return lhs.Compare(rhs) != 0;
-}
 #endif
 }  // namespace calc

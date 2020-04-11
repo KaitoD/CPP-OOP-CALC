@@ -37,13 +37,6 @@ bi128_dVEy_loop:
     }
     return *this;
 }
-
-BigInt<uint128_t>& BigInt<uint128_t>::operator/=(int64_t rhs) {
-    return DivEq64(rhs, nullptr);
-}
-BigInt<uint128_t> operator/(BigInt<uint128_t> lhs, int64_t rhs) {
-    return lhs.DivEq64(rhs, nullptr);
-}
 uint64_t BigInt<uint128_t>::DivDCore(const BigInt& rhs, uint64_t v1,
                                      uint64_t v2, uint64_t u1h, uint64_t u1l,
                                      uint64_t u2, uint64_t bias,
@@ -53,25 +46,22 @@ uint64_t BigInt<uint128_t>::DivDCore(const BigInt& rhs, uint64_t v1,
         q = -1;
     } else {
         asm(R"(
-	movq %0, %%rdx
-	movq %1, %%rax
-	divq %2
-	movq %%rax, %3
-	movq %%rdx, %4
+	movq %2, %%rdx
+	movq %3, %%rax
+	divq %4
+	movq %%rax, %0
+	movq %%rdx, %1
 )"
-            :
-            : "m"(u1h), "m"(u1l), "m"(v1), "m"(q), "m"(r)
+            : "=m"(q), "=m"(r)
+            : "m"(u1h), "m"(u1l), "m"(v1)
             : "memory", "rax", "rdx");
         if (uint128_t(q) * v2 > ((uint128_t(r) << 64) | u2)) --q;
     }
-    // std::printf("0x%llx%llx // %#llx == %#llx\n", u1h, u1l, v1, q);
-    // std::cout << rhs << " * " << q << std::endl;
     BiasedSubEq(rhs * q, bias, half_more);
     if (Sign()) {
         --q;
         BiasedAddEq(rhs, bias, half_more);
     }
-    // std::cout << "remain: " << *this << std::endl;
     return q;
 }
 BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
@@ -120,6 +110,10 @@ bi128_dVDER_nz:
     uint64_t v1 = tmpv >> 64, v2 = tmpv;
     uint64_t i = len_;
     auto rit = rv.val_ + len_ - (testit - rhs.val_);
+    if (!val_[i - 1]) {
+        --i;
+        --rit;
+    }
     auto rterm = rv.val_;
     if (testit <= rhs.val_) ++rterm;
     uint64_t u1h, u1l, u2;
@@ -218,8 +212,30 @@ bi128_dVDER_nz:
     ShrinkLen();
     return *this;
 }
-BigInt<uint128_t> BigInt<uint128_t>::DivD(BigInt lhs, const BigInt& rhs,
-                                          BigInt* mod) {
-    return lhs.DivEqD(rhs, mod);
+BigInt<uint128_t>& BigInt<uint128_t>::operator/=(int64_t rhs) {
+    return DivEq64(rhs, nullptr);
+}
+BigInt<uint128_t>& BigInt<uint128_t>::DivEq(const BigInt& rhs, BigInt* mod) {
+    return DivEqD(rhs, mod);
+}
+BigInt<uint128_t>& BigInt<uint128_t>::operator/=(const BigInt& rhs) {
+    return DivEq(rhs, nullptr);
+}
+BigInt<uint128_t>& BigInt<uint128_t>::operator%=(const BigInt& rhs) {
+    BigInt<uint128_t> rv;
+    DivEq(rhs, &rv);
+    return *this = std::move(rv);
+}
+BigInt<uint128_t>& BigInt<uint128_t>::operator%=(int64_t rhs) {
+    int64_t mod;
+    DivEq64(rhs, &mod);
+    SetLen(0, false);
+    if (mod < 0) {
+        *(val_ + 1) = -1;
+        *val_ = -1;
+        *val_ <<= 64;
+    }
+    *val_ |= mod;
+    return *this;
 }
 }  // namespace calc

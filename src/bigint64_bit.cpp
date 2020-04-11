@@ -134,18 +134,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator^=(const BigInt<uint128_t>& rhs) {
     ShrinkLen();
     return *this;
 }
-BigInt<uint128_t> operator&(BigInt<uint128_t> lhs,
-                            const BigInt<uint128_t>& rhs) {
-    return lhs &= rhs;
-}
-BigInt<uint128_t> operator|(BigInt<uint128_t> lhs,
-                            const BigInt<uint128_t>& rhs) {
-    return lhs |= rhs;
-}
-BigInt<uint128_t> operator^(BigInt<uint128_t> lhs,
-                            const BigInt<uint128_t>& rhs) {
-    return lhs ^= rhs;
-}
 BigInt<uint128_t>& BigInt<uint128_t>::operator<<=(uint64_t rhs) {
     // preserve sign
     if (!rhs) return *this;
@@ -187,11 +175,5 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator>>=(uint64_t rhs) {
         ShrinkLen();
     }
     return *this;
-}
-BigInt<uint128_t> operator<<(BigInt<uint128_t> lhs, uint64_t rhs) {
-    return lhs <<= rhs;
-}
-BigInt<uint128_t> operator>>(BigInt<uint128_t> lhs, uint64_t rhs) {
-    return lhs >>= rhs;
 }
 }  // namespace calc

@@ -43,11 +43,17 @@ void do_test(const BI& a, const BI& b) {
     }
     std::cout << "print(" << a << " == " << b << " * " << a.DivD(a, b, &c);
     std::cout << " + " << c << ")" << std::endl;
+    if (a.Sign() == b.Sign()) {
+        std::cout << "print(" << a << " // " << b << " == " << a.DivR(a, b, &c)
+                  << ")" << std::endl;
+    }
+    std::cout << "print(" << a << " == " << b << " * " << a.DivR(a, b, &c);
+    std::cout << " + " << c << ")" << std::endl;
 }
 int main() {
     std::srand(unsigned(time(nullptr)));
     BI a(0), b;
-    constexpr int len1 = 5, len2 = 3, len3 = 1;
+    constexpr int len1 = 7, len2 = 5, len3 = 1;
     do_test(a.GenRandom(len1), b.GenRandom(len2));
     std::cout << "print()" << std::endl;
     do_test(a.GenRandom(len1).ToOpposite(), b.GenRandom(len2));

@@ -57,7 +57,7 @@ endif
 BI64_TARGETS=bigint64_test bigint64_benchmark bigint64_test2 \
 			 bigint64_benchmark2 bigint64_test3 bigint64_test_extra \
 			 bigint64_benchmark3
-RELEASE_TARGETS=
+RELEASE_TARGETS= bigint64.a bigint64.so
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
 			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test \
 			  bigint_io_test
@@ -210,6 +210,12 @@ bigint64_benchmark2: tests/bigint64_benchmark2.cpp \
 bigint64_benchmark3: tests/bigint64_benchmark3.cpp \
 	src/bigint64.hpp compile/bigint64.o
 	$(CXX) $(CXXFLAGS) tests/bigint64_benchmark3.cpp compile/bigint64.o -o bigint64_benchmark3
+
+bigint64.a: compile/bigint64.o
+	ar rcs bigint64.a compile/bigint64.o
+
+bigint64.so: compile/bigint64.o
+	$(CXX) -shared -o bigint64.so compile/bigint64.o
 
 .PHONY: all clean clean-all
 clean:

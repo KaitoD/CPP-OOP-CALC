@@ -52,7 +52,7 @@ void do_test(const BI& a, const BI& b) {
               << "-" << b << " == " << (-b) << ")" << std::endl;
 }
 int main() {
-    BI a(0llu), b;
+    BI a(0), b;
     constexpr int len1 = 3, len2 = 7, len3 = 2;
     do_test(a.GenRandom(len1), b.GenRandom(len2));
     std::cout << "print()" << std::endl;

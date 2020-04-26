@@ -30,13 +30,12 @@ class BigInt<uint128_t> {
     static constexpr uint64_t MAX_CAP = uint64_t(1) << 63;
 
     // random device
-    // NOLINTNEXTLINE: c++17 ok
-    inline static std::random_device rand_dev_;
-    // NOLINTNEXTLINE: c++17 ok
+    // inline static std::random_device rand_dev_;
+    inline static auto rand_dev_ = std::random_device();
     inline static auto rand_gen_ = static_cast<std::mt19937>(rand_dev_());
     // usage: rand_(rand_gen_)
-    // NOLINTNEXTLINE: c++17 ok
-    inline static std::uniform_int_distribution<uint64_t> rand_;
+    inline static auto rand_ = std::uniform_int_distribution<uint64_t>();
+    // inline static std::uniform_int_distribution<uint64_t> rand_;
 
     // bigint64_div.cpp
     uint64_t DivDCore(const BigInt& rhs, uint64_t v1, uint64_t v2, uint64_t u1h,

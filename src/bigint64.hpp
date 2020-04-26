@@ -105,6 +105,8 @@ class BigInt<uint128_t> {
                          bool uppercase = false) const;
     explicit BigInt(const char* str, size_t base = 0);
     explicit BigInt(const std::string& str, size_t base = 0);
+	// two's complement octet string (bytes), big-endian (network flow style)
+    std::vector<uint8_t> ToOctetString() const;
 
     // bigint64_compare.cpp
 #ifdef __cpp_impl_three_way_comparison

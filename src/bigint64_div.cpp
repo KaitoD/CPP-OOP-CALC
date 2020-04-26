@@ -10,36 +10,17 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEq64(int64_t rhs, int64_t* remain) {
     asm("xorq %%rdx, %%rdx" : : : "rdx");
     do {
         --it;
-        asm(R"(
-	movq 8(%0), %%rax
-	divq %1
-	movq %%rax, 8(%0)
-	movq (%0), %%rax
-	divq %1
-	movq %%rax, (%0)
-)"
+        asm("movq 8(%0), %%rax\n\t"
+            "divq %1\n\t"
+            "movq %%rax, 8(%0)\n\t"
+            "movq (%0), %%rax\n\t"
+            "divq %1\n\t"
+            "movq %%rax, (%0)"
             :
             : "r"(it), "g"(rhs)
             : "cc", "memory", "rax", "rdx");
     } while (it > val_);
     asm("movq %%rdx, %0" : "=m"(mod));
-    // bi128_dVEy_loop:
-    // asm goto(R"(
-    // leaq -16(%0), %0
-    // movq 8(%0), %%rax
-    // divq %1
-    // movq %%rax, 8(%0)
-    // movq (%0), %%rax
-    // divq %1
-    // movq %%rax, (%0)
-    // cmpq %0, %2
-    // jne %l4
-    // movq %%rdx, %3
-    // )"
-    // :
-    // : "r"(it), "g"(rhs), "g"(val_), "m"(mod)
-    // : "cc", "memory", "rax", "rdx"
-    // : bi128_dVEy_loop);
     if (sign != rhs_sign) ToOpposite();
     ShrinkLen();
     if (remain) {
@@ -58,13 +39,12 @@ uint64_t BigInt<uint128_t>::DivDCore(const BigInt& rhs, uint64_t v1,
     if (u1h >= v1) {
         q = -1;
     } else {
-        asm(R"(
-	movq %2, %%rdx
-	movq %3, %%rax
-	divq %4
-	movq %%rax, %0
-	movq %%rdx, %1
-)"
+        asm("movq %2, %%rdx\n\t"
+            "movq %3, %%rax\n\t"
+            "divq %4\n\t"
+            "movq %%rax, %0\n\t"
+            "movq %%rdx, %1"
+
             : "=m"(q), "=m"(r)
             : "m"(u1h), "m"(u1l), "m"(v1)
             : "memory", "rax", "rdx");

@@ -32,7 +32,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator&=(const BigInt<uint128_t>& rhs) {
             auto old_len = len_;
             SetLen(rhs.len_, false);
             it = val_ + old_len;
-            // std::memcpy(it, cit, (end_ - it) * sizeof(uint128_t));
             std::copy(cit, rhs.end_, it);
         }
     } else {
@@ -69,7 +68,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator|=(const BigInt<uint128_t>& rhs) {
             auto old_len = len_;
             SetLen(rhs.len_, false);
             it = val_ + old_len;
-            // std::memcpy(it, cit, (end_ - it) * sizeof(uint128_t));
             std::copy(cit, rhs.end_, it);
         }
     } else {
@@ -114,7 +112,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator^=(const BigInt<uint128_t>& rhs) {
         } else {
             SetLen(rhs.len_, false);
             it = val_ + old_len;
-            // std::memcpy(it, cit, (end_ - it) * sizeof(uint128_t));
             std::copy(cit, rhs.end_, it);
         }
     } else {

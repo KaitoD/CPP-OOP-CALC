@@ -154,16 +154,14 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator*=(uint64_t rhs) {
     uint128_t* it = val_;
     uint128_t* rit = carry.val_;
     do {
-        asm(R"(
-	movq (%0), %%rax
-	mulq %2
-	movq %%rax, (%0)
-	movq %%rdx, 8(%1)
-	movq 8(%0), %%rax
-	mulq %2
-	movq %%rax, 8(%0)
-	movq %%rdx, 16(%1)
-)"
+        asm("movq (%0), %%rax\n\t"
+            "mulq %2\n\t"
+            "movq %%rax, (%0)\n\t"
+            "movq %%rdx, 8(%1)\n\t"
+            "movq 8(%0), %%rax\n\t"
+            "mulq %2\n\t"
+            "movq %%rax, 8(%0)\n\t"
+            "movq %%rdx, 16(%1)"
             : "+r"(it), "+r"(rit)
             : "g"(rhs)
             : "cc", "memory", "rax", "rdx");
@@ -569,7 +567,7 @@ BigInt<uint128_t>& BigInt<uint128_t>::RMNTMulEqGiven(const int64_t* src,
     // require len_ <= (length of the pre-converted number)
     bool sign = Sign();
     if (sign) ToOpposite();
-    int64_t* v = new int64_t[n];
+    auto* v = new int64_t[n];
     auto it = reinterpret_cast<uint16_t*>(val_);
     auto term = reinterpret_cast<uint16_t*>(end_);
     auto vit = v;

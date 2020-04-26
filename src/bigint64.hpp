@@ -11,8 +11,8 @@ class CompMp;
 template <typename IntT>
 class BigInt;
 
-typedef __uint128_t uint128_t;
-typedef __int128_t int128_t;
+using uint128_t = __uint128_t;
+using int128_t = __int128_t;
 
 // Work fine on little-endian machine.
 // Big-endian can be done by reversing the whole vector
@@ -21,10 +21,10 @@ typedef __int128_t int128_t;
 template <>
 class BigInt<uint128_t> {
     // data
-    uint128_t* val_ = nullptr;
-    uint64_t len_ = 2;  // actual used length
-    uint64_t cap_ = 4;  // capacity
-    uint128_t* end_ = nullptr;
+    uint128_t* val_;
+    uint64_t len_;  // actual used length
+    uint64_t cap_;  // capacity
+    uint128_t* end_;
     static constexpr uint64_t LIMB = 128;
     static constexpr uint64_t LOGLIMB = 7;
     static constexpr uint64_t MAX_CAP = uint64_t(1) << 63;

@@ -149,7 +149,7 @@ std::string BigInt<uint128_t>::ToString(int base, int showbase,
         }
     }
     char charset[37] = "0123456789abcdefghijklmnopqrstuvwxyz";
-    if (uppercase) std::strcpy(charset + 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    if (uppercase) std::strncpy(charset + 10, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", 26);
     char buf[129];
     if (base == 16) {
         auto it = end_ - 1;

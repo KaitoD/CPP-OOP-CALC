@@ -76,7 +76,7 @@ BigInt<uint128_t>::operator bool() const {
     return false;
 }
 BigInt<uint128_t>::operator int64_t() const {
-    int64_t r = static_cast<int64_t>(*val_);
+    auto r = static_cast<int64_t>(*val_);
     if (Sign() != bool(r >> 63)) {
         r <<= 1;
         r >>= 1;

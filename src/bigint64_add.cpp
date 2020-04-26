@@ -6,19 +6,18 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator+=(uint64_t rhs) {
     *val_ += rhs;
     // asm("movq %1, %0" : "=r"(it) : "m"(it));
 bi128_pLEy_loop:
-    asm goto(R"(
-    adcq $0, %0
-    adcq $0, 8%0
-    leaq 16(%1), %1
-    jc %l3
-	jno %l4
-	cmpq %2, %1
-	jne %l4
-)"
-             :
-             : "m"(*it), "r"(it), "r"(end_)
-             : "cc", "memory"
-             : bi128_pLEy_loop, bi128_pLEy_ret);
+    asm goto(
+        "adcq $0, %0\n\t"
+        "adcq $0, 8%0\n\t"
+        "leaq 16(%1), %1\n\t"
+        "jc %l3\n\t"
+        "jno %l4\n\t"
+        "cmpq %2, %1\n\t"
+        "jne %l4"
+        :
+        : "m"(*it), "r"(it), "r"(end_)
+        : "cc", "memory"
+        : bi128_pLEy_loop, bi128_pLEy_ret);
     *end_ = 0;
     SetLen(len_ + 1, false);
 bi128_pLEy_ret:
@@ -37,19 +36,18 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(uint64_t rhs) {
     *val_ -= rhs;
     // asm("movq %1, %0" : "=r"(it) : "m"(it));
 bi128_mIEy_loop:
-    asm goto(R"(
-    sbbq $0, %0
-    sbbq $0, 8%0
-    leaq 16(%1), %1
-    jc %l3
-	jno %l4
-	cmpq %2, %1
-	jne %l4
-)"
-             :
-             : "m"(*it), "r"(it), "r"(end_)
-             : "cc", "memory"
-             : bi128_mIEy_loop, bi128_mIEy_ret);
+    asm goto(
+        "sbbq $0, %0\n\t"
+        "sbbq $0, 8%0\n\t"
+        "leaq 16(%1), %1\n\t"
+        "jc %l3\n\t"
+        "jno %l4\n\t"
+        "cmpq %2, %1\n\t"
+        "jne %l4"
+        :
+        : "m"(*it), "r"(it), "r"(end_)
+        : "cc", "memory"
+        : bi128_mIEy_loop, bi128_mIEy_ret);
     *end_ = 0;  // back to default state
     // if signed overflow did occur on highest limb
     SetLen(len_ + 1, false);
@@ -89,14 +87,12 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator+=(const BigInt& rhs) {
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	adcq %%r8, (%0)
-	adcq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "adcq %%r8, (%0)\n\t"
+                "adcq %%r9, 8(%0)\n\t"
+                "lahf"
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -106,30 +102,24 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator+=(const BigInt& rhs) {
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_pLER_loop11:
-        asm goto(R"(
-    adcq $-1, (%0)
-    adcq $-1, 8(%0)
-    leaq 16(%0), %0
-    jnc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_pLER_loop11);
+        asm goto(
+            "adcq $-1, (%0)\n\t"
+            "adcq $-1, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jnc %l1\n\t"
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_pLER_loop11);
     } else {
         *it += *cit;
         asm("lahf" : : : "ah");
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	adcq %%r8, (%0)
-	adcq %%r9, 8(%0)
-	lahf
-)"
+            asm(movq(% 1), % % r8 movq 8(% 1), % % r9 sahf adcq % % r8,
+                (% 0) adcq % % r9, 8(% 0) lahf
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -139,16 +129,16 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator+=(const BigInt& rhs) {
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_pLER_loop21:
-        asm goto(R"(
-    adcq $0, (%0)
-    adcq $0, 8(%0)
-    leaq 16(%0), %0
-    jc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_pLER_loop21);
+        asm goto(
+            "adcq $0, (%0)\n\t"
+            "adcq $0, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_pLER_loop21);
     }
     *end_ = 0;
     ShrinkLen();
@@ -164,14 +154,13 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	sbbq %%r8, (%0)
-	sbbq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "sbbq %%r8, (%0)\n\t"
+                "sbbq %%r9, 8(%0)\n\t"
+                "lahf\n\t"
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -181,16 +170,16 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_mIER_loop11:
-        asm goto(R"(
-    sbbq $-1, (%0)
-    sbbq $-1, 8(%0)
-    leaq 16(%0), %0
-    jnc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_mIER_loop11);
+        asm goto(
+            "sbbq $-1, (%0)\n\t"
+            "sbbq $-1, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jnc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_mIER_loop11);
     } else {
         *end_ = -1;
         *it -= *cit;
@@ -198,14 +187,13 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	sbbq %%r8, (%0)
-	sbbq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "sbbq %%r8, (%0)\n\t"
+                "sbbq %%r9, 8(%0)\n\t"
+                "lahf\n\t"
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -215,16 +203,16 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_mIER_loop21:
-        asm goto(R"(
-    sbbq $0, (%0)
-    sbbq $0, 8(%0)
-    leaq 16(%0), %0
-    jc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_mIER_loop21);
+        asm goto(
+            "sbbq $0, (%0)\n\t"
+            "sbbq $0, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_mIER_loop21);
     }
     *end_ = 0;
     ShrinkLen();
@@ -247,14 +235,13 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedAddEq(const BigInt& rhs,
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	adcq %%r8, (%0)
-	adcq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "adcq %%r8, (%0)\n\t"
+                "adcq %%r9, 8(%0)\n\t"
+                "lahf\n\t"
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -264,30 +251,29 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedAddEq(const BigInt& rhs,
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_pLBias_loop11:
-        asm goto(R"(
-    adcq $-1, (%0)
-    adcq $-1, 8(%0)
-    leaq 16(%0), %0
-    jnc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_pLBias_loop11);
+        asm goto(
+            "adcq $-1, (%0)\n\t"
+            "adcq $-1, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jnc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_pLBias_loop11);
     } else {
         *it += *cit;
         asm("lahf" : : : "ah");
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	adcq %%r8, (%0)
-	adcq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "adcq %%r8, (%0)\n\t"
+                "adcq %%r9, 8(%0)\n\t"
+                "lahf\n\t"
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -297,16 +283,16 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedAddEq(const BigInt& rhs,
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_pLBias_loop21:
-        asm goto(R"(
-    adcq $0, (%0)
-    adcq $0, 8(%0)
-    leaq 16(%0), %0
-    jc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_pLBias_loop21);
+        asm goto(
+            "adcq $0, (%0)\n\t"
+            "adcq $0, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_pLBias_loop21);
     }
     *end_ = 0;
     ShrinkLen();
@@ -328,14 +314,13 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedSubEq(const BigInt& rhs,
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	sbbq %%r8, (%0)
-	sbbq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "sbbq %%r8, (%0)\n\t"
+                "sbbq %%r9, 8(%0)\n\t"
+                "lahf\n\t"
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -345,16 +330,16 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedSubEq(const BigInt& rhs,
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_mIBias_loop11:
-        asm goto(R"(
-    sbbq $-1, (%0)
-    sbbq $-1, 8(%0)
-    leaq 16(%0), %0
-    jnc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_mIBias_loop11);
+        asm goto(
+            "sbbq $-1, (%0)\n\t"
+            "sbbq $-1, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jnc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_mIBias_loop11);
     } else {
         *end_ = -1;
         *it -= *cit;
@@ -362,14 +347,13 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedSubEq(const BigInt& rhs,
         ++it;
         ++cit;
         do {
-            asm(R"(
-	movq (%1), %%r8
-	movq 8(%1), %%r9
-	sahf
-	sbbq %%r8, (%0)
-	sbbq %%r9, 8(%0)
-	lahf
-)"
+            asm("movq (%1), %%r8\n\t"
+                "movq 8(%1), %%r9\n\t"
+                "sahf\n\t"
+                "sbbq %%r8, (%0)\n\t"
+                "sbbq %%r9, 8(%0)\n\t"
+                "lahf\n\t"
+
                 : "+r"(it), "+r"(cit)
                 :
                 : "cc", "memory", "r8", "r9", "rax");
@@ -379,16 +363,16 @@ BigInt<uint128_t>& BigInt<uint128_t>::BiasedSubEq(const BigInt& rhs,
         // implicit alignment
         asm("sahf" : : : "ah", "cc");
     bi128_mIBias_loop21:
-        asm goto(R"(
-    sbbq $0, (%0)
-    sbbq $0, 8(%0)
-    leaq 16(%0), %0
-    jc %l1
-)"
-                 :
-                 : "r"(it)
-                 : "cc", "memory"
-                 : bi128_mIBias_loop21);
+        asm goto(
+            "sbbq $0, (%0)\n\t"
+            "sbbq $0, 8(%0)\n\t"
+            "leaq 16(%0), %0\n\t"
+            "jc %l1\n\t"
+
+            :
+            : "r"(it)
+            : "cc", "memory"
+            : bi128_mIBias_loop21);
     }
     *end_ = 0;
     ShrinkLen();

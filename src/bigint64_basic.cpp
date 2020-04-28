@@ -246,4 +246,62 @@ double BigInt<uint128_t>::log2() const {
         return std::log2(double(*it)) + ((it - val_) << LOGLIMB);
 }
 double BigInt<uint128_t>::log10() const { return log2() / std::log2(10.0); }
+std::vector<uint8_t> BigInt<uint128_t>::Serialize() const {
+    // 0 is empty vector
+    if (!*this) return std::vector<uint8_t>();
+    bool sign = Sign();
+    uint8_t empty_limb = sign ? -1 : 0;
+    auto it = reinterpret_cast<uint8_t*>(end_);
+    auto term = reinterpret_cast<uint8_t*>(val_);
+    while (it > term && *(--it) == empty_limb)
+        ;
+    if ((*it >> 7) ^ sign) ++it;
+    ++it;
+    std::vector<uint8_t> v;
+    v.resize(it - term);
+    uint8_t* i = it;
+    for (auto&& ii : v) ii = *(--i);
+    return v;
+}
+// input from big-endian data
+BigInt<uint128_t>::BigInt(const uint8_t* data, size_t size)
+    : len_((size >> 4) + 1), cap_(4) {
+    if (!size) {
+        val_ = new uint128_t[4];
+        len_ = 2;
+        cap_ = 4;
+        end_ = val_ + len_;
+        std::fill(val_, val_ + cap_, 0);
+        return;
+    }
+    while (cap_ <= len_) cap_ <<= 1;
+    val_ = new uint128_t[cap_];
+    if (len_ < 2) {
+        len_ = 2;
+    }
+    end_ = val_ + len_;
+    std::fill(end_, val_ + cap_, 0);
+    if (data[0] >> 7)
+        std::fill(val_, end_, -1);
+    else
+        std::fill(val_, end_, 0);
+    uint64_t p = size;
+    uint64_t i = 0;
+    for (; p >= 16; ++i) {
+        p -= 16;
+        for (int j = 0; j < 16; ++j) {
+            val_[i] <<= 8;
+            val_[i] |= data[p++];
+        }
+        p -= 16;
+    }
+    if (p) {
+        uint64_t t = p;
+        p = 0;
+        do {
+            val_[i] <<= 8;
+            val_[i] |= data[p++];
+        } while (p < t);
+    }
+}
 }  // namespace calc

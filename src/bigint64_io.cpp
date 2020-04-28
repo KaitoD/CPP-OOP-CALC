@@ -290,21 +290,6 @@ std::string BigInt<uint128_t>::ToString(int base, int showbase,
     }
     return result;
 }
-std::vector<uint8_t> BigInt<uint128_t>::ToOctetString() const {
-	// 0 is empty vector
-    if (!*this) return std::vector<uint8_t>();
-    bool sign = Sign();
-    uint8_t empty_limb = sign ? -1 : 0;
-    auto it = reinterpret_cast<uint8_t*>(end_);
-    auto term = reinterpret_cast<uint8_t*>(val_);
-    while (it > term && *(--it) == empty_limb)
-        ;
-    if ((*it >> 7) ^ sign) ++it;
-    std::vector<uint8_t> v;
-    v.reserve(it - term + 1);
-    for (uint8_t* i = it; i >= term; --i) v.push_back(*i);
-    return v;
-}
 BigInt<uint128_t>::BigInt(const std::string& str, size_t base)
     : BigInt(str.c_str(), base) {}
 BigInt<uint128_t>::BigInt(const char* str, size_t base) : BigInt(0) {

@@ -56,7 +56,7 @@ endif
 # set targets here
 BI64_TARGETS=bigint64_test bigint64_benchmark bigint64_test2 \
 			 bigint64_benchmark2 bigint64_test3 bigint64_test_extra \
-			 bigint64_benchmark3
+			 bigint64_benchmark3 bigint64_test4
 RELEASE_TARGETS= bigint64.a bigint64.so
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
 			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test \
@@ -194,6 +194,10 @@ bigint64_test2: tests/bigint64_test2.cpp \
 bigint64_test3: tests/bigint64_test3.cpp \
 	src/bigint64.hpp compile/bigint64.o
 	$(CXX) $(CXXFLAGS) tests/bigint64_test3.cpp compile/bigint64.o -o bigint64_test3
+
+bigint64_test4: tests/bigint64_test4.cpp \
+	src/bigint64.hpp compile/bigint64.o
+	$(CXX) $(CXXFLAGS) tests/bigint64_test4.cpp compile/bigint64.o -o bigint64_test4
 
 bigint64_test_extra: tests/bigint64_test_extra.cpp \
 	src/bigint64.hpp compile/bigint64.o

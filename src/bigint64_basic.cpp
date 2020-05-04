@@ -303,5 +303,6 @@ BigInt<uint128_t>::BigInt(const uint8_t* data, size_t size)
             val_[i] |= data[p++];
         } while (p < t);
     }
+    ShrinkLen();
 }
 }  // namespace calc

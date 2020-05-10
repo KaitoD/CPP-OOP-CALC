@@ -260,6 +260,8 @@ BigInt<uint128_t> PowMod(const BigInt<uint128_t>& a, uint64_t p,
 BigInt<uint128_t> GcdBin(BigInt<uint128_t> a, BigInt<uint128_t> b) {
     a.ToAbsolute();
     b.ToAbsolute();
+    if (!a) return b;
+    if (!b) return a;
     size_t q1 = a.TrailingZero(), q2 = b.TrailingZero();
     int cmp;
     a >>= q1;
@@ -279,8 +281,30 @@ BigInt<uint128_t> GcdBin(BigInt<uint128_t> a, BigInt<uint128_t> b) {
 }
 BigInt<uint128_t> ExtGcdBin(BigInt<uint128_t> a, BigInt<uint128_t> b,
                             BigInt<uint128_t>* x, BigInt<uint128_t>* y) {
-    a.ToAbsolute();
-    b.ToAbsolute();
+    auto asign = a.Sign();
+    if (asign) a.ToOpposite();
+    auto bsign = b.Sign();
+    if (bsign) b.ToOpposite();
+    if (!a) {
+        if (x) *x = BigInt<uint128_t>(0);
+        if (y) {
+            if (bsign)
+                *y = BigInt<uint128_t>(-1);
+            else
+                *y = BigInt<uint128_t>(1);
+        }
+        return b;
+    }
+    if (!b) {
+        if (y) *y = BigInt<uint128_t>(0);
+        if (x) {
+            if (asign)
+                *x = BigInt<uint128_t>(-1);
+            else
+                *x = BigInt<uint128_t>(1);
+        }
+        return a;
+    }
     // p*a0+q*b0=a, r*a0+s*b0=b
     BigInt<uint128_t> p(1), q(0), r(0), s(1);
     size_t t0 = std::min(a.TrailingZero(), b.TrailingZero());
@@ -364,11 +388,23 @@ BigInt<uint128_t> ExtGcdBin(BigInt<uint128_t> a, BigInt<uint128_t> b,
             q >>= t1;
         } else {
             if (swapped) {
-                if (x) *x = q;
-                if (y) *y = p;
+                if (x) {
+                    *x = std::move(q);
+                    if (asign) x->ToOpposite();
+                }
+                if (y) {
+                    *y = std::move(p);
+                    if (bsign) y->ToOpposite();
+                }
             } else {
-                if (x) *x = p;
-                if (y) *y = q;
+                if (x) {
+                    *x = std::move(p);
+                    if (asign) x->ToOpposite();
+                }
+                if (y) {
+                    *y = std::move(q);
+                    if (bsign) y->ToOpposite();
+                }
             }
             return a <<= t0;
         }

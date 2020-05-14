@@ -1,17 +1,5 @@
 #include "bigint64.hpp"
 namespace calc {
-BigInt<uint128_t>& BigInt<uint128_t>::ToBitInv() {
-    uint128_t* it = val_;
-    do {
-        *it = ~*it;
-        ++it;
-    } while (it != end_);
-    return *this;
-}
-BigInt<uint128_t> BigInt<uint128_t>::operator~() const {
-    auto obj = *this;
-    return obj.ToBitInv();
-}
 BigInt<uint128_t>& BigInt<uint128_t>::operator&=(const BigInt<uint128_t>& rhs) {
     auto it = val_;
     auto cit = rhs.val_;

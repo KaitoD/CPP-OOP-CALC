@@ -413,7 +413,7 @@ void BigInt<uint128_t>::MNT(CompMp* dest, uint64_t n, bool inv) {
         for (i = 0; i < n; ++i) dest[i] *= mov;
 }
 BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
-    // if (len_ <= 2 || rhs.len_ <= 2) return PlainMulEq(rhs);
+    if (len_ <= 2 || rhs.len_ <= 2) return PlainMulEq(rhs);
     if (len_ <= 4 || rhs.len_ <= 4) return RMNTMulEq(rhs);
     if (rhs.Sign()) {
         MulEqKaratsuba(-rhs);
@@ -447,15 +447,15 @@ BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
     if (t >= len_) {
         d.MulEqKaratsuba(b);
         c.MulEqKaratsuba(b);
-        // d *= b;
-        // c *= b;
+        d *= b;
+        c *= b;
         *this = std::move(d);
         BiasedAddEq(c, t);
     } else if (t >= rhs.len_) {
         a.MulEqKaratsuba(d);
         b.MulEqKaratsuba(d);
-        // b *= d;
-        // a *= d;
+        b *= d;
+        a *= d;
         *this = std::move(b);
         BiasedAddEq(a, t);
     } else {
@@ -463,9 +463,9 @@ BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
         x.MulEqKaratsuba(c + d);
         a.MulEqKaratsuba(c);
         b.MulEqKaratsuba(d);
-        // x = (a + b) * (c + d);
-        // a *= c;
-        // b *= d;
+        x = (a + b) * (c + d);
+        a *= c;
+        b *= d;
         x -= a;
         x -= b;
         *this = std::move(b);
@@ -475,42 +475,89 @@ BigInt<uint128_t>& BigInt<uint128_t>::MulEqKaratsuba(const BigInt& rhs) {
     if (sign) ToOpposite();
     return *this;
 }
-BigInt<uint128_t>& BigInt<uint128_t>::PlainMulEq(const BigInt& rhs) {
-    if (rhs.Sign()) {
-        PlainMulEq(-rhs);
-        return ToOpposite();
+BigInt<uint128_t> BigInt<uint128_t>::PlainMul(const BigInt& lhs,
+                                              const BigInt& rhs) {
+    if (lhs.Sign()) {
+        if (rhs.Sign()) {
+            return PlainMulBase(-lhs, -rhs);
+        } else {
+            auto tmp = PlainMulBase(-lhs, rhs);
+            tmp.ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto tmp = PlainMulBase(lhs, -rhs);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return PlainMulBase(lhs, rhs);
+        }
     }
-    bool sign = Sign();
-    if (sign) ToOpposite();
-    BigInt<uint128_t> save_this = std::move(*this);
+}
+BigInt<uint128_t> BigInt<uint128_t>::PlainMul(BigInt&& lhs, const BigInt& rhs) {
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            return PlainMulBase(lhs, -rhs);
+        } else {
+            auto tmp = PlainMulBase(lhs, rhs);
+            tmp.ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto tmp = PlainMulBase(lhs, -rhs);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return PlainMulBase(lhs, rhs);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::PlainMul(BigInt&& lhs, BigInt&& rhs) {
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            return PlainMulBase(lhs, rhs);
+        } else {
+            auto tmp = PlainMulBase(lhs, rhs);
+            tmp.ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = PlainMulBase(lhs, rhs);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return PlainMulBase(lhs, rhs);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::PlainMulBase(const BigInt& lhs,
+                                                  const BigInt& rhs) {
+    BigInt<uint128_t> result;
     auto cit = reinterpret_cast<uint64_t*>(rhs.val_);
     uint64_t i = 0;
     auto cterm = reinterpret_cast<uint64_t*>(rhs.end_);
     if (!*(rhs.end_ - 1)) cterm -= 2;
-    *this = BigInt<uint128_t>(0);
     do {
-        BiasedAddEq(save_this * (*cit), i, false);
+        result.BiasedAddEq(lhs * (*cit), i, false);
         ++cit;
-        BiasedAddEq(save_this * (*cit), i, true);
+        result.BiasedAddEq(lhs * (*cit), i, true);
         ++cit;
         ++i;
     } while (cit < cterm);
-    if (sign) ToOpposite();
-    ShrinkLen();
-    return *this;
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator*=(const BigInt& rhs) {
-    if (rhs.len_ <= 16 || len_ <= 16) {
-        return PlainMulEq(rhs);
-    } else if ((len_ << 2) < rhs.len_ || (rhs.len_ << 2) < len_) {
-        return RMNTMulEqUB(rhs);
-    } else {
-        return RMNTMulEq(rhs);
-    }
+    result.ShrinkLen();
+    return result;
 }
 BigInt<uint128_t>& BigInt<uint128_t>::SquareEq() {
     // specialized version of RMNTMulEq
     if (Sign()) ToOpposite();
+    if (len_ <= 8) return *this = PlainMulBase(*this, *this);
     int64_t* v;
     uint64_t n = 1;
     auto it = reinterpret_cast<uint16_t*>(val_);

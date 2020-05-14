@@ -24,12 +24,6 @@ bi128_pLEy_ret:
     *end_ = 0;
     return *this;
 }
-BigInt<uint128_t>& BigInt<uint128_t>::operator++() { return *this += 1; }
-BigInt<uint128_t> BigInt<uint128_t>::operator++(int) {
-    auto obj = *this;
-    *this += 1;
-    return obj;
-}
 BigInt<uint128_t>& BigInt<uint128_t>::operator-=(uint64_t rhs) {
     *end_ = -1;  // ensure terminal condition for 0 - 1
     uint128_t* it = val_ + 1;
@@ -55,32 +49,6 @@ bi128_mIEy_loop:
 bi128_mIEy_ret:
     *end_ = 0;  // back to default state
     return *this;
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator--() { return *this -= 1; }
-BigInt<uint128_t> BigInt<uint128_t>::operator--(int) {
-    auto obj = *this;
-    *this -= 1;
-    return obj;
-}
-BigInt<uint128_t>& BigInt<uint128_t>::ToOpposite() {
-    ToBitInv();
-    return *this += 1;
-}
-BigInt<uint128_t>& BigInt<uint128_t>::ToAbsolute() {
-    if (Sign())
-        return ToOpposite();
-    else
-        return *this;
-}
-BigInt<uint128_t> BigInt<uint128_t>::operator-() const {
-    auto obj = *this;
-    return obj.ToOpposite();
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator+=(const BigInt& rhs) {
-    return BiasedAddEq(rhs, 0, false);
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator-=(const BigInt& rhs) {
-    return BiasedSubEq(rhs, 0, false);
 }
 BigInt<uint128_t>& BigInt<uint128_t>::BiasedAddEq(const BigInt& rhs,
                                                   uint64_t bias,

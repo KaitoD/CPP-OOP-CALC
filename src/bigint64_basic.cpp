@@ -64,9 +64,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator=(
     std::swap(end_, rhs.end_);
     return *this;
 }
-BigInt<uint128_t>::~BigInt() { delete[] val_; }
-const uint128_t* BigInt<uint128_t>::Data() const { return val_; }
-uint64_t BigInt<uint128_t>::Length() const { return len_; }
 BigInt<uint128_t>::operator bool() const {
     auto it = val_;
     do {
@@ -84,8 +81,6 @@ BigInt<uint128_t>::operator int64_t() const {
     }
     return r;
 }
-bool BigInt<uint128_t>::Sign() const { return *(end_ - 1) >> (LIMB - 1); }
-bool BigInt<uint128_t>::Parity() const { return *val_ & 1; }
 uint64_t BigInt<uint128_t>::TrailingZero() const {
     auto it = val_;
     while (!*it && it != end_) ++it;
@@ -245,7 +240,6 @@ double BigInt<uint128_t>::log2() const {
     else
         return std::log2(double(*it)) + ((it - val_) << LOGLIMB);
 }
-double BigInt<uint128_t>::log10() const { return log2() / std::log2(10.0); }
 std::vector<uint8_t> BigInt<uint128_t>::Serialize() const {
     // 0 is empty vector
     if (!*this) return std::vector<uint8_t>();

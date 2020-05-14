@@ -31,9 +31,9 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEq64(int64_t rhs, int64_t* remain) {
     }
     return *this;
 }
-uint64_t BigInt<uint128_t>::DivDCore(const BigInt& rhs, uint64_t v1,
-                                     uint64_t v2, uint64_t u1h, uint64_t u1l,
-                                     uint64_t u2, uint64_t bias,
+uint64_t BigInt<uint128_t>::DivDCore(BigInt& lhs, const BigInt& rhs,
+                                     uint64_t v1, uint64_t v2, uint64_t u1h,
+                                     uint64_t u1l, uint64_t u2, uint64_t bias,
                                      bool half_more) {
     uint64_t q, r;
     if (u1h >= v1) {
@@ -50,33 +50,125 @@ uint64_t BigInt<uint128_t>::DivDCore(const BigInt& rhs, uint64_t v1,
             : "memory", "rax", "rdx");
         if (uint128_t(q) * v2 > ((uint128_t(r) << 64) | u2)) --q;
     }
-    BiasedSubEq(rhs * q, bias, half_more);
-    if (Sign()) {
+    lhs.BiasedSubEq(rhs * q, bias, half_more);
+    if (lhs.Sign()) {
         --q;
-        BiasedAddEq(rhs, bias, half_more);
+        lhs.BiasedAddEq(rhs, bias, half_more);
     }
     return q;
 }
-BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
-    // reinterpret as uint64
-    if (!rhs) return *this;
-    if (rhs.Sign()) {
-        DivEqD(-rhs, mod);
-        return ToOpposite();
-    }
-    bool sign = Sign();
-    if (sign) ToOpposite();
-    if (*this < rhs) {
-        if (mod) {
-            if (sign) ToOpposite();
-            *mod = std::move(*this);
+BigInt<uint128_t> BigInt<uint128_t>::DivD(const BigInt& lhs, const BigInt& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        if (rhs.Sign()) {
+            auto tmp = DivDBase(-lhs, -rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivDBase(-lhs, rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
         }
-        SetLen(0, false);
-        return *this;
+    } else {
+        if (rhs.Sign()) {
+            auto tmp = DivDBase(lhs, -rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivDBase(lhs, rhs, mod);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivD(const BigInt& lhs, BigInt&& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivDBase(-lhs, rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivDBase(-lhs, rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivDBase(lhs, rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivDBase(lhs, rhs, mod);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivD(BigInt&& lhs, const BigInt& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            auto tmp = DivDBase(std::move(lhs), -rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivDBase(std::move(lhs), rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto tmp = DivDBase(std::move(lhs), -rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivDBase(std::move(lhs), rhs, mod);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivD(BigInt&& lhs, BigInt&& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivDBase(std::move(lhs), rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivDBase(std::move(lhs), rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivDBase(std::move(lhs), rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivDBase(std::move(lhs), rhs, mod);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivDBase(BigInt lhs, const BigInt& rhs,
+                                              BigInt* mod) {
+    // reinterpret as uint64
+    if (lhs < rhs) {
+        if (mod) *mod = std::move(lhs);
+        return BigInt<uint128_t>(0);
     }
     auto testit = rhs.end_ - 1;
     BigInt<uint128_t> rv;
-    uint64_t rlen = len_ - rhs.len_ + 2;
+    uint64_t rlen = lhs.len_ - rhs.len_ + 2;
     while (!*testit) {
         --testit;
         ++rlen;
@@ -100,9 +192,9 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
     uint128_t tmpv = *testit << mov;
     if (testit > rhs.val_ && mov) tmpv |= *(testit - 1) >> (128 - mov);
     uint64_t v1 = tmpv >> 64, v2 = tmpv;
-    uint64_t i = len_;
-    auto rit = rv.val_ + len_ - (testit - rhs.val_);
-    if (!val_[i - 1]) {
+    uint64_t i = lhs.len_;
+    auto rit = rv.val_ + lhs.len_ - (testit - rhs.val_);
+    if (!lhs.val_[i - 1]) {
         --i;
         --rit;
     }
@@ -118,27 +210,29 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
             --i;
 
             // high
-            t1 = val_[i + 1];
-            t2 = val_[i];
-            t3 = val_[i - 1];
+            t1 = lhs.val_[i + 1];
+            t2 = lhs.val_[i];
+            t3 = lhs.val_[i - 1];
             t1 = (t1 << mov) | (t2 >> (128 - mov));
             t2 = (t2 << mov) | (t3 >> (128 - mov));
             u1h = t1 >> 64;
             u1l = t1;
             u2 = t2 >> 64;
-            *rit = DivDCore(rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, true);
+            *rit =
+                DivDCore(lhs, rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, true);
             *rit <<= 64;
 
             // low
-            t1 = val_[i + 1];
-            t2 = val_[i];
-            t3 = val_[i - 1];
+            t1 = lhs.val_[i + 1];
+            t2 = lhs.val_[i];
+            t3 = lhs.val_[i - 1];
             t1 = (t1 << mov) | (t2 >> (128 - mov));
             t2 = (t2 << mov) | (t3 >> (128 - mov));
             u1h = t1;
             u1l = t2 >> 64;
             u2 = t2;
-            *rit |= DivDCore(rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, false);
+            *rit |=
+                DivDCore(lhs, rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, false);
         }
     } else {
         // mov>=width is UB
@@ -147,21 +241,23 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
             --i;
 
             // high
-            t1 = val_[i + 1];
-            t2 = val_[i];
+            t1 = lhs.val_[i + 1];
+            t2 = lhs.val_[i];
             u1h = t1 >> 64;
             u1l = t1;
             u2 = t2 >> 64;
-            *rit = DivDCore(rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, true);
+            *rit =
+                DivDCore(lhs, rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, true);
             *rit <<= 64;
 
             // low, must re-extract
-            t1 = val_[i + 1];
-            t2 = val_[i];
+            t1 = lhs.val_[i + 1];
+            t2 = lhs.val_[i];
             u1h = t1;
             u1l = t2 >> 64;
             u2 = t2;
-            *rit |= DivDCore(rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, false);
+            *rit |=
+                DivDCore(lhs, rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, false);
         }
     }
     if (testit <= rhs.val_) {
@@ -170,8 +266,8 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
         --i;
 
         // high
-        t1 = val_[i + 1];
-        t2 = val_[i];
+        t1 = lhs.val_[i + 1];
+        t2 = lhs.val_[i];
         if (mov) {
             t1 = (t1 << mov) | (t2 >> (128 - mov));
             t2 <<= mov;
@@ -179,12 +275,12 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
         u1h = t1 >> 64;
         u1l = t1;
         u2 = t2 >> 64;
-        *rit = DivDCore(rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, true);
+        *rit = DivDCore(lhs, rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, true);
         *rit <<= 64;
 
         // low
-        t1 = val_[i + 1];
-        t2 = val_[i];
+        t1 = lhs.val_[i + 1];
+        t2 = lhs.val_[i];
         if (mov) {
             t1 = (t1 << mov) | (t2 >> (128 - mov));
             t2 <<= mov;
@@ -192,20 +288,14 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqD(const BigInt& rhs, BigInt* mod) {
         u1h = t1;
         u1l = t2 >> 64;
         u2 = t2;
-        *rit |= DivDCore(rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, false);
+        *rit |= DivDCore(lhs, rhs, v1, v2, u1h, u1l, u2, rit - rv.val_, false);
     }
     if (mod) {
-        *mod = std::move(*this);
-        if (sign) mod->ToOpposite();
+        *mod = std::move(lhs);
         mod->ShrinkLen();
     }
-    *this = std::move(rv);
-    if (sign) ToOpposite();
-    ShrinkLen();
-    return *this;
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator/=(int64_t rhs) {
-    return DivEq64(rhs, nullptr);
+    rv.ShrinkLen();
+    return rv;
 }
 BigInt<uint128_t>& BigInt<uint128_t>::DivEq(const BigInt& rhs, BigInt* mod) {
     // if (rhs.len_ > 16 && len_ * 2 > rhs.len_ * 3 && len_ < rhs.len_ * 3)
@@ -215,14 +305,6 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEq(const BigInt& rhs, BigInt* mod) {
         return DivEqD(rhs, mod);
     else
         return DivEqR(rhs, mod);
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator/=(const BigInt& rhs) {
-    return DivEq(rhs, nullptr);
-}
-BigInt<uint128_t>& BigInt<uint128_t>::operator%=(const BigInt& rhs) {
-    BigInt<uint128_t> rv;
-    DivEq(rhs, &rv);
-    return *this = std::move(rv);
 }
 BigInt<uint128_t>& BigInt<uint128_t>::operator%=(int64_t rhs) {
     int64_t mod;
@@ -236,7 +318,8 @@ BigInt<uint128_t>& BigInt<uint128_t>::operator%=(int64_t rhs) {
     *val_ |= mod;
     return *this;
 }
-void BigInt<uint128_t>::DivRNormal(const BigInt& rhs, BigInt* mod) {
+BigInt<uint128_t> BigInt<uint128_t>::DivRNormal(BigInt lhs, const BigInt& rhs,
+                                                BigInt* mod) {
     // normalized: all positive, quotinent not zero,
     // bitlen of rhs divisible by 256
     auto cit = rhs.end_ - 1;
@@ -244,73 +327,63 @@ void BigInt<uint128_t>::DivRNormal(const BigInt& rhs, BigInt* mod) {
     // uint64_t t = (cit - rhs.val_ + 1) >> 1;
     uint64_t t = (cit - rhs.val_ + 1);
     t >>= 1;
-    uint64_t k = (len_ + t - 1) / t;
+    uint64_t k = (lhs.len_ + t - 1) / t;
     BigInt<uint128_t> u, v;
     BigInt<uint128_t> rv;
     cit = rhs.val_ + t;
     v.SetLen(rhs.end_ - cit, false);
     std::copy(cit, rhs.end_, v.val_);
-    auto term = end_;
+    auto term = lhs.end_;
     uint64_t i = k - 1;
-    auto it = val_ + i * t;
+    auto it = lhs.val_ + i * t;
     u.SetLen(term - it, false);
     std::copy(it, term, u.val_);
-    u /= v;
-    BiasedSubEq(rhs * u, (i - 1) * t, false);
-    if (Sign()) {
+    u = std::move(u) / v;
+    lhs.BiasedSubEq(rhs * u, (i - 1) * t, false);
+    if (lhs.Sign()) {
         --u;
-        BiasedAddEq(rhs, (i - 1) * t, false);
+        lhs.BiasedAddEq(rhs, (i - 1) * t, false);
     }
-    if (Sign()) {
+    if (lhs.Sign()) {
         --u;
-        BiasedAddEq(rhs, (i - 1) * t, false);
+        lhs.BiasedAddEq(rhs, (i - 1) * t, false);
     }
     rv.BiasedAddEq(u, (i - 1) * t, false);
-    term = end_;
+    term = lhs.end_;
     for (--i; i > 0; --i) {
-        it = val_ + i * t;
+        it = lhs.val_ + i * t;
         u.SetLen(term - it + 1, false);
         *(u.end_ - 1) = 0;
         std::copy(it, term, u.val_);
         u.ShrinkLen();
-        u /= v;
-        BiasedSubEq(rhs * u, (i - 1) * t, false);
-        if (Sign()) {
+        u = std::move(u) / v;
+        lhs.BiasedSubEq(rhs * u, (i - 1) * t, false);
+        if (lhs.Sign()) {
             --u;
-            BiasedAddEq(rhs, (i - 1) * t, false);
+            lhs.BiasedAddEq(rhs, (i - 1) * t, false);
         }
-        if (Sign()) {
+        if (lhs.Sign()) {
             --u;
-            BiasedAddEq(rhs, (i - 1) * t, false);
+            lhs.BiasedAddEq(rhs, (i - 1) * t, false);
         }
         rv.BiasedAddEq(u, (i - 1) * t, false);
-        term = val_ + (i + 1) * t;
+        term = lhs.val_ + (i + 1) * t;
     }
-    if (mod) *mod = std::move(*this);
-    *this = std::move(rv);
+    if (mod) *mod = std::move(lhs);
+    return rv;
 }
-BigInt<uint128_t>& BigInt<uint128_t>::DivEqR(const BigInt& rhs, BigInt* mod) {
-    if (!rhs) return *this;
-    if (rhs.Sign()) {
-        DivEqD(-rhs, mod);
-        return ToOpposite();
-    }
-    bool sign = Sign();
-    if (sign) ToOpposite();
-    if (*this < rhs) {
-        if (mod) {
-            if (sign) ToOpposite();
-            *mod = std::move(*this);
-        }
-        SetLen(0, false);
-        return *this;
+BigInt<uint128_t> BigInt<uint128_t>::DivRBase(BigInt lhs, const BigInt& rhs,
+                                              BigInt* mod) {
+    if (lhs < rhs) {
+        if (mod) *mod = std::move(lhs);
+        return BigInt<uint128_t>(0);
     }
     auto testit = rhs.end_ - 1;
     while (!*testit) {
         --testit;
     }
     if (testit <= rhs.val_ + 2) {
-        DivEqD(rhs, mod);
+        return DivDBase(std::move(lhs), rhs, mod);
     } else {
         uint64_t mov;
         if (*testit >> 64) {
@@ -329,21 +402,117 @@ BigInt<uint128_t>& BigInt<uint128_t>::DivEqR(const BigInt& rhs, BigInt* mod) {
         if (!((testit - rhs.val_) & 1)) mov += 128;
         // normalized
         if (mov) {
-            *this <<= mov;
-            DivRNormal(rhs << mov, mod);
+            lhs <<= mov;
+            // rvalue of rhs can be optimized
+            auto tmp = DivRNormal(std::move(lhs), rhs << mov, mod);
             if (mod) *mod >>= mov;
+            return tmp;
         } else {
-            DivRNormal(rhs, mod);
+            auto tmp = DivRNormal(std::move(lhs), rhs, mod);
+            return tmp;
         }
     }
-    if (sign) {
-        ToOpposite();
-        if (mod) {
-            mod->ToOpposite();
-            mod->ShrinkLen();
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivR(const BigInt& lhs, const BigInt& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        if (rhs.Sign()) {
+            auto tmp = DivRBase(-lhs, -rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivRBase(-lhs, rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto tmp = DivRBase(lhs, -rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivRBase(lhs, rhs, mod);
         }
     }
-    ShrinkLen();
-    return *this;
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivR(const BigInt& lhs, BigInt&& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivRBase(-lhs, rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivRBase(-lhs, rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivRBase(lhs, rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivRBase(lhs, rhs, mod);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivR(BigInt&& lhs, const BigInt& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            auto tmp = DivRBase(std::move(lhs), -rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivRBase(std::move(lhs), rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto tmp = DivRBase(std::move(lhs), -rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivRBase(std::move(lhs), rhs, mod);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::DivR(BigInt&& lhs, BigInt&& rhs,
+                                          BigInt* mod) {
+    if (!rhs) return lhs;
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivRBase(std::move(lhs), rhs, mod);
+            if (mod) mod->ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = DivRBase(std::move(lhs), rhs, mod);
+            tmp.ToOpposite();
+            if (mod) mod->ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (rhs.Sign()) {
+            rhs.ToOpposite();
+            auto tmp = DivRBase(std::move(lhs), rhs, mod);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            return DivRBase(std::move(lhs), rhs, mod);
+        }
+    }
 }
 }  // namespace calc

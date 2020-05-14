@@ -153,6 +153,7 @@ class BigInt<uint128_t> {
     BigInt& RMNTMulEqUB(const BigInt& rhs);
     BigInt& PlainMulEq(const BigInt& rhs);
     static BigInt PlainMulBase(const BigInt& lhs, const BigInt& rhs);
+    static BigInt RMNTMulUBBase(const BigInt& lhs, const BigInt& rhs);
 
     // bigint64_ext.cpp
     bool isProbablePrime() const;
@@ -162,7 +163,6 @@ class BigInt<uint128_t> {
 
     // inline functions
     static BigInt RMNTMul(BigInt lhs, const BigInt& rhs);
-    static BigInt RMNTMulUB(BigInt lhs, const BigInt& rhs);
     static BigInt MNTMul(BigInt lhs, const BigInt& rhs);
     // deprecated
     static BigInt MulKaratsuba(BigInt lhs, const BigInt& rhs);
@@ -170,6 +170,10 @@ class BigInt<uint128_t> {
     static BigInt PlainMul(const BigInt& lhs, BigInt&& rhs);
     static BigInt PlainMul(BigInt&& lhs, const BigInt& rhs);
     static BigInt PlainMul(BigInt&& lhs, BigInt&& rhs);
+    static BigInt RMNTMulUB(const BigInt& lhs, const BigInt& rhs);
+    static BigInt RMNTMulUB(const BigInt& lhs, BigInt&& rhs);
+    static BigInt RMNTMulUB(BigInt&& lhs, const BigInt& rhs);
+    static BigInt RMNTMulUB(BigInt&& lhs, BigInt&& rhs);
     static BigInt DivD(const BigInt& lhs, const BigInt& rhs,
                        BigInt* mod = nullptr);
     static BigInt DivD(const BigInt& lhs, BigInt&& rhs, BigInt* mod = nullptr);
@@ -397,11 +401,6 @@ inline BigInt<uint128_t> BigInt<uint128_t>::RMNTMul(BigInt lhs,
     lhs.RMNTMulEq(rhs);
     return lhs;
 }
-inline BigInt<uint128_t> BigInt<uint128_t>::RMNTMulUB(BigInt lhs,
-                                                      const BigInt& rhs) {
-    lhs.RMNTMulEqUB(rhs);
-    return lhs;
-}
 inline BigInt<uint128_t> BigInt<uint128_t>::MulKaratsuba(BigInt lhs,
                                                          const BigInt& rhs) {
     lhs.MulEqKaratsuba(rhs);
@@ -417,6 +416,13 @@ inline BigInt<uint128_t> BigInt<uint128_t>::PlainMul(const BigInt& lhs,
 }
 inline BigInt<uint128_t>& BigInt<uint128_t>::PlainMulEq(const BigInt& rhs) {
     return *this = PlainMul(std::move(*this), rhs);
+}
+inline BigInt<uint128_t> BigInt<uint128_t>::RMNTMulUB(const BigInt& lhs,
+                                                      BigInt&& rhs) {
+    return RMNTMulUB(std::move(rhs), lhs);
+}
+inline BigInt<uint128_t>& BigInt<uint128_t>::RMNTMulEqUB(const BigInt& rhs) {
+    return *this = RMNTMulUB(std::move(*this), rhs);
 }
 inline BigInt<uint128_t>& BigInt<uint128_t>::operator*=(const BigInt& rhs) {
     if (rhs.len_ <= 16 || len_ <= 16) {

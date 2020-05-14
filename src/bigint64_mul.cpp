@@ -660,95 +660,151 @@ BigInt<uint128_t>& BigInt<uint128_t>::RMNTMulEqGiven(const int64_t* src,
     delete[] v;
     return *this;
 }
-BigInt<uint128_t>& BigInt<uint128_t>::RMNTMulEqUB(const BigInt& rhs) {
-    // reinterpret as uint16
-    if (rhs.Sign()) {
-        RMNTMulEqUB(-rhs);
-        return ToOpposite();
+BigInt<uint128_t> BigInt<uint128_t>::RMNTMulUB(const BigInt& lhs,
+                                               const BigInt& rhs) {
+    if (lhs.Sign()) {
+        auto x = -lhs;
+        if (rhs.Sign()) {
+            auto y = -rhs;
+            if (x.len_ > y.len_)
+                return RMNTMulUBBase(x, y);
+            else
+                return RMNTMulUBBase(y, x);
+        } else {
+            if (x.len_ > rhs.len_) {
+                auto tmp = RMNTMulUBBase(x, rhs);
+                tmp.ToOpposite();
+                return tmp;
+            } else {
+                auto tmp = RMNTMulUBBase(rhs, x);
+                tmp.ToOpposite();
+                return tmp;
+            }
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto y = -rhs;
+            if (y.len_ > lhs.len_) {
+                auto tmp = RMNTMulUBBase(y, lhs);
+                tmp.ToOpposite();
+                return tmp;
+            } else {
+                auto tmp = RMNTMulUBBase(lhs, y);
+                tmp.ToOpposite();
+                return tmp;
+            }
+        } else {
+            if (lhs.len_ > rhs.len_)
+                return RMNTMulUBBase(lhs, rhs);
+            else
+                return RMNTMulUBBase(rhs, lhs);
+        }
     }
-    bool sign = Sign();
-    if (sign) ToOpposite();
+}
+BigInt<uint128_t> BigInt<uint128_t>::RMNTMulUB(BigInt&& lhs,
+                                               const BigInt& rhs) {
+    if (lhs.Sign()) {
+        lhs.ToOpposite();
+        if (rhs.Sign()) {
+            auto y = -rhs;
+            if (lhs.len_ > y.len_)
+                return RMNTMulUBBase(lhs, y);
+            else
+                return RMNTMulUBBase(y, rhs);
+        } else {
+            if (lhs.len_ > rhs.len_) {
+                auto tmp = RMNTMulUBBase(lhs, rhs);
+                tmp.ToOpposite();
+                return tmp;
+            } else {
+                auto tmp = RMNTMulUBBase(rhs, lhs);
+                tmp.ToOpposite();
+                return tmp;
+            }
+        }
+    } else {
+        if (rhs.Sign()) {
+            auto y = -rhs;
+            if (y.len_ > lhs.len_) {
+                auto tmp = RMNTMulUBBase(y, lhs);
+                tmp.ToOpposite();
+                return tmp;
+            } else {
+                auto tmp = RMNTMulUBBase(lhs, y);
+                tmp.ToOpposite();
+                return tmp;
+            }
+        } else {
+            if (lhs.len_ > rhs.len_)
+                return RMNTMulUBBase(lhs, rhs);
+            else
+                return RMNTMulUBBase(rhs, lhs);
+        }
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::RMNTMulUB(BigInt&& lhs, BigInt&& rhs) {
+    auto lsign = lhs.Sign();
+    auto rsign = rhs.Sign();
+    if (lsign) lhs.ToOpposite();
+    if (rsign) rhs.ToOpposite();
+    if (lsign ^ rsign) {
+        if (lhs.len_ > rhs.len_) {
+            auto tmp = RMNTMulUBBase(lhs, rhs);
+            tmp.ToOpposite();
+            return tmp;
+        } else {
+            auto tmp = RMNTMulUBBase(rhs, lhs);
+            tmp.ToOpposite();
+            return tmp;
+        }
+    } else {
+        if (lhs.len_ > rhs.len_)
+            return RMNTMulUBBase(lhs, rhs);
+        else
+            return RMNTMulUBBase(rhs, lhs);
+    }
+}
+BigInt<uint128_t> BigInt<uint128_t>::RMNTMulUBBase(const BigInt& lhs,
+                                                   const BigInt& rhs) {
     int64_t* v;
     uint64_t n = 1;
     uint64_t k, i;
-    BigInt<uint128_t> tmp_obj;
-    if (len_ > rhs.len_) {
-        auto cit = reinterpret_cast<uint16_t*>(rhs.val_);
-        auto cterm = reinterpret_cast<uint16_t*>(rhs.end_);
-        while (n <= rhs.len_) n <<= 1;
-        n <<= 4;
-        k = (len_ + rhs.len_ - 1) / rhs.len_;
-        v = new int64_t[n];
-        auto vit = v;
-        for (; cit < cterm; vit += 8, cit += 8) {
-            for (int j = 0; j < 8; j += 2) {
-                *(vit + j) = *(cit + j);
-                *(vit + j + 1) = *(cit + j + 1);
-            }
+    BigInt<uint128_t> tmp_obj, rv;
+    auto cit = reinterpret_cast<uint16_t*>(rhs.val_);
+    auto cterm = reinterpret_cast<uint16_t*>(rhs.end_);
+    while (n <= rhs.len_) n <<= 1;
+    n <<= 4;
+    k = (lhs.len_ + rhs.len_ - 1) / rhs.len_;
+    v = new int64_t[n];
+    auto vit = v;
+    for (; cit < cterm; vit += 8, cit += 8) {
+        for (int j = 0; j < 8; j += 2) {
+            *(vit + j) = *(cit + j);
+            *(vit + j + 1) = *(cit + j + 1);
         }
-        std::fill(vit, v + n, 0);
-        RMNT(v, n, false);
-        BigInt<uint128_t> save_this = std::move(*this);
-        auto sit = save_this.val_;
-        auto sterm = save_this.end_;
-        *this = BigInt<uint128_t>(0);
-        for (i = 0; i < k - 1; ++i) {
-            tmp_obj.SetLen(rhs.len_ + 1, false);
-            *(tmp_obj.end_ - 1) = 0;
-            std::copy(sit, sit + rhs.len_, tmp_obj.val_);
-            sit += rhs.len_;
-            tmp_obj.ShrinkLen();
-            tmp_obj.RMNTMulEqGiven(v, n, rhs.len_);
-            BiasedAddEq(tmp_obj, i * rhs.len_, false);
-        }
-        tmp_obj = BigInt<uint128_t>(0);
-        tmp_obj.SetLen(sterm - sit + 1, false);
+    }
+    std::fill(vit, v + n, 0);
+    RMNT(v, n, false);
+    auto sit = lhs.val_;
+    auto sterm = lhs.end_;
+    for (i = 0; i < k - 1; ++i) {
+        tmp_obj.SetLen(rhs.len_ + 1, false);
         *(tmp_obj.end_ - 1) = 0;
-        std::copy(sit, sterm, tmp_obj.val_);
+        std::copy(sit, sit + rhs.len_, tmp_obj.val_);
+        sit += rhs.len_;
         tmp_obj.ShrinkLen();
         tmp_obj.RMNTMulEqGiven(v, n, rhs.len_);
-        BiasedAddEq(tmp_obj, i * rhs.len_, false);
-        delete[] v;
-    } else {
-        auto it = reinterpret_cast<uint16_t*>(val_);
-        auto term = reinterpret_cast<uint16_t*>(end_);
-        auto this_len = len_;
-        while (n <= this_len) n <<= 1;
-        n <<= 4;
-        k = (rhs.len_ + this_len - 1) / this_len;
-        v = new int64_t[n];
-        auto vit = v;
-        for (; it < term; vit += 8, it += 8) {
-            for (int j = 0; j < 8; j += 2) {
-                *(vit + j) = *(it + j);
-                *(vit + j + 1) = *(it + j + 1);
-            }
-        }
-        std::fill(vit, v + n, 0);
-        RMNT(v, n, false);
-        *this = BigInt<uint128_t>(0);
-        auto cit = rhs.val_;
-        auto cterm = rhs.end_;
-        for (i = 0; i < k - 1; ++i) {
-            tmp_obj.SetLen(this_len + 1, false);
-            *(tmp_obj.end_ - 1) = 0;
-            std::copy(cit, cit + this_len, tmp_obj.val_);
-            cit += this_len;
-            tmp_obj.ShrinkLen();
-            tmp_obj.RMNTMulEqGiven(v, n, this_len);
-            BiasedAddEq(tmp_obj, i * this_len, false);
-        }
-        tmp_obj = BigInt<uint128_t>(0);
-        tmp_obj.SetLen(cterm - cit + 1, false);
-        *(tmp_obj.end_ - 1) = 0;
-        std::copy(cit, cterm, tmp_obj.val_);
-        tmp_obj.ShrinkLen();
-        tmp_obj.RMNTMulEqGiven(v, n, this_len);
-        BiasedAddEq(tmp_obj, i * this_len, false);
-        delete[] v;
+        rv.BiasedAddEq(tmp_obj, i * rhs.len_, false);
     }
-    if (sign) ToOpposite();
-    ShrinkLen();
-    return *this;
+    tmp_obj = BigInt<uint128_t>(0);
+    tmp_obj.SetLen(sterm - sit + 1, false);
+    *(tmp_obj.end_ - 1) = 0;
+    std::copy(sit, sterm, tmp_obj.val_);
+    tmp_obj.ShrinkLen();
+    tmp_obj.RMNTMulEqGiven(v, n, rhs.len_);
+    rv.BiasedAddEq(tmp_obj, i * rhs.len_, false);
+    delete[] v;
+    rv.ShrinkLen();
+    return rv;
 }
 }  // namespace calc

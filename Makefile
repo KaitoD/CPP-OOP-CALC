@@ -57,7 +57,7 @@ endif
 BI64_TARGETS=bigint64_test bigint64_benchmark bigint64_test2 \
 			 bigint64_benchmark2 bigint64_test3 bigint64_test_extra \
 			 bigint64_benchmark3 bigint64_test4
-RELEASE_TARGETS= bigint64.a bigint64.so
+RELEASE_TARGETS= bigint64.a bigint64.so bigint64_basic.a
 DEBUG_TARGETS=bigint_basic_test bigint_bit_arith_test bigint_simple_arith_test \
 			  bigint_mul_test bigint_divmod_test bigint_ext_arith_test \
 			  bigint_io_test
@@ -217,6 +217,12 @@ bigint64_benchmark3: tests/bigint64_benchmark3.cpp \
 
 bigint64.a: compile/bigint64.o
 	ar rcs bigint64.a compile/bigint64.o
+
+compile/bigint64_basic.o: src/bigint64_basic.cpp src/bigint64.hpp
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+bigint64_basic.a: compile/bigint64_basic.o
+	ar rcs $@ $?
 
 bigint64.so: compile/bigint64.o
 	$(CXX) -shared -o bigint64.so compile/bigint64.o
